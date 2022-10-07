@@ -13,14 +13,11 @@ Si falta algo utiliza "git add ."
 
 Siempre asegura de que todo este en verde antes de hacer un commit.
 
-Para hacer un commit de los archivos utiliza "git commit -m "Nombre_Version""
+Para hacer un commit de los archivos utiliza "git commit -m "Cambios_Realizados""
 
-Para hacer un tag utiliza "git tag -a Nombre_Tag -m "Nombre_Version""
+Para hacer un tag utiliza "git tag -a Nombre_Tag -m "Version""
 
-Para subir un archivo primero utiliza "git remote add origin
-https://github.com/Robertguarneros/ProyectoSO.git"
-
-Y para subir el commit "git push -u origin master"
+Y para subir el commit "git push -u origin main"
 
 Si el commit tiene tag entonces "git push -u origin master --tag"
 
@@ -30,18 +27,18 @@ has hecho.
 Para nombrar las versiones utilizaremos la siguiente sintaxis.
 
 Hay 7 versiones.
-La primera version es solo la base de datos, esa sera la version #0.
+La primera version es solo la base de datos, esa sera la version 0.
 
-De ahi en adelante cada nombre sera la version. Ejemplo estamos trabajando en
-la entrega de la version 1. Pues el nombre sera "1.0.0"
+De ahi en adelante el nombre de cada commit será los cambios realizados. Ejemplo estamos trabajando en
+la entrega de la version 1. y se llamará "Se agrega login"
 
-Despues si se hace un cambio a la version se pondra en el segundo digito.
-Ejemplo estamos trabajando en la version 1 y se cambia el menu ahora se
-llamara "1.1.0"
+Si decidimos que podria ser esa la entrega minima pues el tag sera "1.0" y el mensaje del tag siempre sera "Proyecto SO v0.0"
+con la version correspondiente
 
-Si se hace arregla un bug entonces se modifica el tercer digito. Ejemplo
-estamos trabajando en la version "2.1.0" y encontramos un bug. Entonces al
-corregirlo y guardarlo, ahora se llamara "2.1.1"
+Si se hace un cambio antes de la entrega de la v1.0 que sea relevante entonces el nombre del tag será "v1.1" con el mensaje 
+"Proyecto SO v1.1"
 
+Si se hace arregla un bug entonces no hace falta agregar un tag pero ese commit se guardará con
+el nombre de "Cambios Realizados"
 
 
