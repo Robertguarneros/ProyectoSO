@@ -117,9 +117,11 @@ int Login(char peticion_servidor[512])//Funcion para verificar credenciales del 
 				mysql_errno(conn), mysql_error(conn));
 		exit (1);
 	}else if(err==0)
+	{
 		//recogemos el resultado de la consulta 
-	resultado = mysql_store_result (conn); 
-	row = mysql_fetch_row (resultado);
+		resultado = mysql_store_result (conn); 
+		row = mysql_fetch_row (resultado);
+	}
 	if (row == NULL)
 	{
 		printf ("No se han obtenido datos en la consulta\n");
@@ -146,6 +148,137 @@ int Login(char peticion_servidor[512])//Funcion para verificar credenciales del 
 }
 
 
+int CountGames(char username[100])//funcion para ver el total de partidas jugadas
+{
+	char respuesta_cuenta[20];
+	int respuesta_servidor_sql;//variable que se usara para control de errores
+	
+	MYSQL *conn;
+	int err;
+	// Estructura especial para almacenar resultados de consultas 
+	MYSQL_RES *resultado;
+	MYSQL_ROW row;
+	
+	char consulta [150];//string para enviar la consulta a BBDD
+	
+	//Creamos una conexion al servidor MYSQL 
+	conn = mysql_init(NULL);
+	if (conn==NULL) {
+		respuesta_servidor_sql = 1;//regresar 1 porque hay error al crear la conexion
+		printf ("Error al crear la conexion: %u %s\n", 
+				mysql_errno(conn), mysql_error(conn));
+	}
+	//inicializar la conexion
+	conn = mysql_real_connect (conn, "localhost","root", "mysql", "ProyectoSO",0, NULL, 0);
+	if (conn==NULL) {
+		respuesta_servidor_sql=2;//error al inicializar la conexion
+		printf ("Error al inicializar la conexion: %u %s\n", 
+				mysql_errno(conn), mysql_error(conn));
+	}
+	
+	// consulta SQL para obtener una tabla con todos los datos
+	// de la base de datos
+	//construir consulta sql	
+	
+	sprintf(consulta,"SELECT COUNT(Games.Game_ID) FROM Games WHERE Games.Username_Player1='%s' OR Games.Username_Player2='%s';",username,username);
+	// hacemos la consulta 
+	err=mysql_query (conn, consulta); 
+	if (err!=0) {
+		respuesta_servidor_sql = 3;//error al consultar datos 
+		printf ("Error al consultar datos de la base %u %s\n",
+				mysql_errno(conn), mysql_error(conn));
+		exit (1);
+	}else if(err==0)
+	{
+		//recogemos el resultado de la consulta 
+		resultado = mysql_store_result (conn); 
+		row = mysql_fetch_row (resultado);
+	}
+	if (row == NULL)
+	{
+		printf ("No se han obtenido datos en la consulta\n");
+		respuesta_servidor_sql=5;
+	}
+	else
+	{
+		strcpy(respuesta_cuenta,row[0]);
+
+		// El resultado debe ser una matriz con una sola fila
+		// una columna con la cuenta
+		if (respuesta_cuenta!=NULL)
+			respuesta_servidor_sql=atoi(respuesta_cuenta);//exito
+		else
+			respuesta_servidor_sql=4;//error en cuenta
+	}
+	// cerrar la conexion con el servidor MYSQL 
+	mysql_close (conn);
+	//regresamos el resultado
+	return respuesta_servidor_sql;
+}
+
+
+
+char* viewScore(char username[100])//funcion para ver los puntos de una partida en especifico
+{
+	char* respuesta_char_servidor_sql=malloc(512);
+	
+	
+	MYSQL *conn;
+	int err;
+	// Estructura especial para almacenar resultados de consultas 
+	MYSQL_RES *resultado;
+	MYSQL_ROW row;
+	
+	char consulta [150];//string para enviar la consulta a BBDD
+	
+	//Creamos una conexion al servidor MYSQL 
+	conn = mysql_init(NULL);
+	if (conn==NULL) {
+		printf ("Error al crear la conexion: %u %s\n", 
+				mysql_errno(conn), mysql_error(conn));
+	}
+	//inicializar la conexion
+	conn = mysql_real_connect (conn, "localhost","root", "mysql", "ProyectoSO",0, NULL, 0);
+	if (conn==NULL) {
+		printf ("Error al inicializar la conexion: %u %s\n", 
+				mysql_errno(conn), mysql_error(conn));
+	}
+	
+	// consulta SQL para obtener una tabla con todos los datos
+	// de la base de datos
+	//construir consulta sql	
+	
+	//sprintf(consulta,"SELECT *, IF(Username_Player1='%s',Score_Player1,Score_Player2) AS Score FROM Games WHERE Game_ID=2 AND (Username_Player1='%s' OR Username_Player2='%s');",username,username,username);
+	sprintf(consulta,"SELECT * FROM Games WHERE Game_ID=2 AND (Username_Player1='%s' OR Username_Player2='%s');",username,username);
+	// hacemos la consulta 
+	err=mysql_query (conn, consulta); 
+	if (err!=0) {
+		printf ("Error al consultar datos de la base %u %s\n",
+				mysql_errno(conn), mysql_error(conn));
+		exit (1);
+	}else if(err==0)
+	{
+		//recogemos el resultado de la consulta 
+		resultado = mysql_store_result (conn); 
+		row = mysql_fetch_row (resultado);
+		// El resultado debe ser una matriz con una sola fila
+		// una columna con Username y una columna con Passwd y una con el nombre, esta ultima no se usa aqui
+	}
+	if (row == NULL)
+	{
+		strcpy(respuesta_char_servidor_sql,"No se ha encontrado la partida\n");
+	}
+	else
+	{
+		sprintf(respuesta_char_servidor_sql,"%s:%s puntos\n%s:%s",row[1],row[3],row[2],row[4]);
+	}
+	// cerrar la conexion con el servidor MYSQL 
+	mysql_close (conn);
+	//regresamos el resultado
+	return respuesta_char_servidor_sql;
+}
+
+//main
 int main(int argc, char *argv[])
 {
 	int sock_conn, sock_listen, ret;
@@ -155,6 +288,8 @@ int main(int argc, char *argv[])
 	char peticion_servidor[512];
 	char respuesta[512];
 	int respuesta_servidor_sql;
+	char respuesta_char_servidor_sql[512];
+	char username_loggedin[100];
 	
 	// INICIALIZACIONES
 	// Se abre el socket
@@ -219,6 +354,7 @@ int main(int argc, char *argv[])
 				respuesta_servidor_sql = Login(peticion_servidor);
 				if (respuesta_servidor_sql==0)
 				{
+					strcpy(username_loggedin,strtok(NULL, "/"));
 					strcpy(respuesta, "Login correcto");
 				}
 				else if(respuesta_servidor_sql==4)
@@ -231,6 +367,14 @@ int main(int argc, char *argv[])
 				{
 					strcpy(respuesta, "Error al iniciar sesion");
 				}
+			}else if(codigo==3)
+			{
+				respuesta_servidor_sql = CountGames(username_loggedin);
+				sprintf(respuesta, "%d", respuesta_servidor_sql);
+			}else if(codigo==4)
+			{
+				strcpy(respuesta_char_servidor_sql,viewScore(username_loggedin));
+				strcpy(respuesta,respuesta_char_servidor_sql);
 			}
 			if (codigo !=0){
 				// Enviamos la respuesta

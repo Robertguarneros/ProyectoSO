@@ -29,3 +29,6 @@ INSERT INTO Jugador VALUES('Roberto03','12345678','Roberto');
 INSERT INTO Games VALUES (1,'Roger01','Sergi02',10,5);
 INSERT INTO Games VALUES (2,'Roberto03','Sergi02',5,10);
 INSERT INTO Games VALUES (3,'Roger01','Roberto03',0,4);
+INSERT INTO Games VALUES (4,'Roger01','Sergi02',20,5);
+INSERT INTO Games VALUES (5,'Roberto03','Sergi02',52,10);
+INSERT INTO Games VALUES (6,'Roger01','Roberto03',10,4);
