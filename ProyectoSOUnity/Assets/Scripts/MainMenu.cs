@@ -33,7 +33,7 @@ public class MainMenu : MonoBehaviour
         //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
         //al que deseamos conectarnos
         IPAddress direc = IPAddress.Parse("192.168.56.102");
-        IPEndPoint ipep = new IPEndPoint(direc, 9081);
+        IPEndPoint ipep = new IPEndPoint(direc, 9088);
 
         //Creamos el socket 
         server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -41,6 +41,7 @@ public class MainMenu : MonoBehaviour
         {
            server.Connect(ipep);//Intentamos conectar el socket
             connectedLabel.SetActive(true);
+            disconnectLabel.SetActive(false);
             errorLabel.SetActive(false);
             
         }
@@ -64,6 +65,7 @@ public class MainMenu : MonoBehaviour
         // Nos desconectamos
         server.Shutdown(SocketShutdown.Both);
         server.Close();
+        connectedLabel.SetActive(false);
         disconnectLabel.SetActive(true);
     }
 
@@ -83,6 +85,7 @@ public class MainMenu : MonoBehaviour
             server.Receive(msg2);
             mensaje = Encoding.ASCII.GetString(msg2).Split('\0')[0];
             //Si el registro fue exitoso se muestra el mensaje
+            Debug.Log(mensaje);//mensaje en consola para ver que regresa el servidor
             if (mensaje == "Registrado Correctamente")
                 registradoLabel.text = "Registrado Correctamente\nInicia Sesion";
             else
@@ -108,8 +111,14 @@ public class MainMenu : MonoBehaviour
             byte[] msg2 = new byte[80];
             server.Receive(msg2);
             mensaje = Encoding.ASCII.GetString(msg2).Split('\0')[0];
+            Debug.Log(mensaje);//mensaje en consola para ver que regresa el servidor
             if (mensaje == "Login correcto")
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+                //loginSuccesfulLabel.text = "Credenciales correctas";
+            else if (mensaje == "Password Incorrecto")
+                loginSuccesfulLabel.text = "Password Incorrecto";
+            else if (mensaje == "Username Incorrecto")
+                loginSuccesfulLabel.text = "Username Incorrecto";
             else
                 loginSuccesfulLabel.text = "Error al iniciar sesion, intenta nuevamente";
         }
