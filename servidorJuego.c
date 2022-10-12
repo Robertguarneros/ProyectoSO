@@ -10,9 +10,9 @@
 #include <mysql.h>
 
 //Declaracion de funciones y metodos
-int RegisterUser(char peticion_servidor[512])
+int RegisterUser(char peticion_servidor[512])//Funcion para agregar jugadores
 {
-	int respuesta_servidor;//variable que se usara para control de errores
+	int respuesta_servidor_sql;//variable que se usara para control de errores
 	int codigo_peticion;
 	char username[100];
 	char password[100];
@@ -30,19 +30,19 @@ int RegisterUser(char peticion_servidor[512])
 	MYSQL_RES *resultado;
 	MYSQL_ROW row;
 	
-	char consulta [80];//string para enviar la consulta a BBDD
+	char consulta [150];//string para enviar la consulta a BBDD
 	
 	//Creamos una conexion al servidor MYSQL 
 	conn = mysql_init(NULL);
 	if (conn==NULL) {
-		respuesta_servidor = 1;//regresar 1 porque hay error al crear la conexion
+		respuesta_servidor_sql = 1;//regresar 1 porque hay error al crear la conexion
 		printf ("Error al crear la conexion: %u %s\n", 
 				mysql_errno(conn), mysql_error(conn));
 	}
 	//inicializar la conexion
 	conn = mysql_real_connect (conn, "localhost","root", "mysql", "ProyectoSO",0, NULL, 0);
 	if (conn==NULL) {
-		respuesta_servidor=2;//error al inicializar la conexion
+		respuesta_servidor_sql=2;//error al inicializar la conexion
 		printf ("Error al inicializar la conexion: %u %s\n", 
 				mysql_errno(conn), mysql_error(conn));
 	}
@@ -54,18 +54,96 @@ int RegisterUser(char peticion_servidor[512])
 	// hacemos la consulta 
 	err=mysql_query (conn, consulta); 
 	if (err!=0) {
-		respuesta_servidor = 3;//error al consultar datos 
+		respuesta_servidor_sql = 3;//error al consultar datos 
 		printf ("Error al consultar datos de la base %u %s\n",
 				mysql_errno(conn), mysql_error(conn));
 		exit (1);
-	}else if(err=0)
-		respuesta_servidor=0;
+	}else if(err==0)
+		respuesta_servidor_sql=0;
 	// cerrar la conexion con el servidor MYSQL 
 	mysql_close (conn);
 	//regresamos el resultado
-	return respuesta_servidor;
+	return respuesta_servidor_sql;
 }
 
+int Login(char peticion_servidor[512])//Funcion para verificar credenciales del jugador e iniciar sesion
+{
+	int respuesta_servidor_sql;//variable que se usara para control de errores
+	int codigo_peticion;
+	char username[100];
+	char password[100];
+	char db_username[100];
+	char db_password[100];
+	int rescmp1;
+	int rescmp2;
+	
+	char* p = strtok(peticion_servidor, "/");
+	int codigo = atoi(p);
+	strcpy(username,strtok(NULL, "/"));
+	strcpy(password,strtok(NULL, "/"));
+	
+	MYSQL *conn;
+	int err;
+	// Estructura especial para almacenar resultados de consultas 
+	MYSQL_RES *resultado;
+	MYSQL_ROW row;
+	
+	char consulta [150];//string para enviar la consulta a BBDD
+	
+	//Creamos una conexion al servidor MYSQL 
+	conn = mysql_init(NULL);
+	if (conn==NULL) {
+		respuesta_servidor_sql = 1;//regresar 1 porque hay error al crear la conexion
+		printf ("Error al crear la conexion: %u %s\n", 
+				mysql_errno(conn), mysql_error(conn));
+	}
+	//inicializar la conexion
+	conn = mysql_real_connect (conn, "localhost","root", "mysql", "ProyectoSO",0, NULL, 0);
+	if (conn==NULL) {
+		respuesta_servidor_sql=2;//error al inicializar la conexion
+		printf ("Error al inicializar la conexion: %u %s\n", 
+				mysql_errno(conn), mysql_error(conn));
+	}
+	
+	// consulta SQL para obtener una tabla con todos los datos
+	// de la base de datos
+	//construir consulta sql	
+	sprintf(consulta,"SELECT * FROM Jugador WHERE Username='%s';",username);
+	// hacemos la consulta 
+	err=mysql_query (conn, consulta); 
+	if (err!=0) {
+		respuesta_servidor_sql = 3;//error al consultar datos 
+		printf ("Error al consultar datos de la base %u %s\n",
+				mysql_errno(conn), mysql_error(conn));
+		exit (1);
+	}else if(err==0)
+		//recogemos el resultado de la consulta 
+	resultado = mysql_store_result (conn); 
+	row = mysql_fetch_row (resultado);
+	if (row == NULL)
+	{
+		printf ("No se han obtenido datos en la consulta\n");
+		respuesta_servidor_sql=5;
+	}
+	else
+	{
+		strcpy(db_username,row[0]);
+		strcpy(db_password,row[1]);
+		rescmp1 = strcmp(username,db_username);
+		rescmp2 = strcmp(password, db_password);
+		
+		// El resultado debe ser una matriz con una sola fila
+		// una columna con Username y una columna con Passwd y una con el nombre, esta ultima no se usa aqui
+		if ((rescmp1==0)&&(rescmp2==0))
+			respuesta_servidor_sql=0;//exito
+		else if((rescmp1==0)&&(rescmp2!=0))
+			respuesta_servidor_sql=4;//4 si la contrasena es incorrecta pero el usuario esta bien
+	}
+	// cerrar la conexion con el servidor MYSQL 
+	mysql_close (conn);
+	//regresamos el resultado
+	return respuesta_servidor_sql;
+}
 
 
 int main(int argc, char *argv[])
@@ -76,7 +154,7 @@ int main(int argc, char *argv[])
 	char peticion[512];
 	char peticion_servidor[512];
 	char respuesta[512];
-	int resultado;
+	int respuesta_servidor_sql;
 	
 	// INICIALIZACIONES
 	// Se abre el socket
@@ -89,7 +167,7 @@ int main(int argc, char *argv[])
 	//htonl formatea el numero que recibe al formato necesario
 	serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
 	// escucharemos en el port 9050
-	serv_adr.sin_port = htons(9081);
+	serv_adr.sin_port = htons(9088);
 	if (bind(sock_listen, (struct sockaddr *) &serv_adr, sizeof(serv_adr)) < 0)
 		printf ("Error al bind");
 	//La cola de peticiones pendientes no podr? ser superior a 4 Que quiere decir???
@@ -110,7 +188,7 @@ int main(int argc, char *argv[])
 		{
 			//Recibimos peticiones
 			ret = read(sock_conn, peticion, sizeof(peticion));
-			printf("Recibida una petición\n");
+			printf("Recibida una peticion\n");
 			// Tenemos que agregar la marca de fin de string 
 			// para que no escriba lo que hay despues en el buffer
 			peticion[ret] = '\0';
@@ -119,15 +197,14 @@ int main(int argc, char *argv[])
 			int codigo = atoi(p);
 			//Escribimos la peticion en la consola
 			if (codigo != 0){
-				printf("La petición es: %s\n", peticion_servidor);
+				printf("La peticion es: %s\n", peticion_servidor);
 			}
 			
 			if (codigo == 0)
 				terminar = 1;
 			else if (codigo == 1){ //registrar un usuario
-				resultado = RegisterUser(peticion_servidor);
-				printf("el resultado regreso %d",resultado);
-				if (resultado==0)
+				respuesta_servidor_sql = RegisterUser(peticion_servidor);
+				if (respuesta_servidor_sql==0)
 				{
 					strcpy(respuesta, "Registrado Correctamente");
 				}
@@ -139,7 +216,21 @@ int main(int argc, char *argv[])
 			}
 			else if (codigo == 2)//iniciar sesion
 			{
-				
+				respuesta_servidor_sql = Login(peticion_servidor);
+				if (respuesta_servidor_sql==0)
+				{
+					strcpy(respuesta, "Login correcto");
+				}
+				else if(respuesta_servidor_sql==4)
+				{
+					strcpy(respuesta, "Password Incorrecto");
+				}else if(respuesta_servidor_sql==5)
+				{
+					strcpy(respuesta, "Username Incorrecto");
+				}else
+				{
+					strcpy(respuesta, "Error al iniciar sesion");
+				}
 			}
 			if (codigo !=0){
 				// Enviamos la respuesta
