@@ -66,9 +66,9 @@ int RegisterUser(char peticion_servidor[512])//Funcion para agregar jugadores
 	return respuesta_servidor_sql;
 }
 
-int Login(char peticion_servidor[512])//Funcion para verificar credenciales del jugador e iniciar sesion
+char* Login(char peticion_servidor[512])//Funcion para verificar credenciales del jugador e iniciar sesion
 {
-	int respuesta_servidor_sql;//variable que se usara para control de errores
+	char* respuesta_char_servidor_sql=malloc(512);
 	int codigo_peticion;
 	char username[100];
 	char password[100];
@@ -93,14 +93,12 @@ int Login(char peticion_servidor[512])//Funcion para verificar credenciales del 
 	//Creamos una conexion al servidor MYSQL 
 	conn = mysql_init(NULL);
 	if (conn==NULL) {
-		respuesta_servidor_sql = 1;//regresar 1 porque hay error al crear la conexion
 		printf ("Error al crear la conexion: %u %s\n", 
 				mysql_errno(conn), mysql_error(conn));
 	}
 	//inicializar la conexion
 	conn = mysql_real_connect (conn, "localhost","root", "mysql", "ProyectoSO",0, NULL, 0);
 	if (conn==NULL) {
-		respuesta_servidor_sql=2;//error al inicializar la conexion
 		printf ("Error al inicializar la conexion: %u %s\n", 
 				mysql_errno(conn), mysql_error(conn));
 	}
@@ -112,7 +110,6 @@ int Login(char peticion_servidor[512])//Funcion para verificar credenciales del 
 	// hacemos la consulta 
 	err=mysql_query (conn, consulta); 
 	if (err!=0) {
-		respuesta_servidor_sql = 3;//error al consultar datos 
 		printf ("Error al consultar datos de la base %u %s\n",
 				mysql_errno(conn), mysql_error(conn));
 		exit (1);
@@ -125,7 +122,7 @@ int Login(char peticion_servidor[512])//Funcion para verificar credenciales del 
 	if (row == NULL)
 	{
 		printf ("No se han obtenido datos en la consulta\n");
-		respuesta_servidor_sql=5;
+		strcpy(respuesta_char_servidor_sql,"-2/");
 	}
 	else
 	{
@@ -137,14 +134,17 @@ int Login(char peticion_servidor[512])//Funcion para verificar credenciales del 
 		// El resultado debe ser una matriz con una sola fila
 		// una columna con Username y una columna con Passwd y una con el nombre, esta ultima no se usa aqui
 		if ((rescmp1==0)&&(rescmp2==0))
-			respuesta_servidor_sql=0;//exito
+		{
+			strcpy(respuesta_char_servidor_sql,"0/");
+			strcat(respuesta_char_servidor_sql,username);
+		}
 		else if((rescmp1==0)&&(rescmp2!=0))
-			respuesta_servidor_sql=4;//4 si la contrasena es incorrecta pero el usuario esta bien
+			strcpy(respuesta_char_servidor_sql,"-1/");//-1 si la contrasena es incorrecta pero el usuario esta bien
 	}
 	// cerrar la conexion con el servidor MYSQL 
 	mysql_close (conn);
 	//regresamos el resultado
-	return respuesta_servidor_sql;
+	return respuesta_char_servidor_sql;
 }
 
 
@@ -164,14 +164,12 @@ int CountGames(char username[100])//funcion para ver el total de partidas jugada
 	//Creamos una conexion al servidor MYSQL 
 	conn = mysql_init(NULL);
 	if (conn==NULL) {
-		respuesta_servidor_sql = 1;//regresar 1 porque hay error al crear la conexion
 		printf ("Error al crear la conexion: %u %s\n", 
 				mysql_errno(conn), mysql_error(conn));
 	}
 	//inicializar la conexion
 	conn = mysql_real_connect (conn, "localhost","root", "mysql", "ProyectoSO",0, NULL, 0);
 	if (conn==NULL) {
-		respuesta_servidor_sql=2;//error al inicializar la conexion
 		printf ("Error al inicializar la conexion: %u %s\n", 
 				mysql_errno(conn), mysql_error(conn));
 	}
@@ -184,7 +182,6 @@ int CountGames(char username[100])//funcion para ver el total de partidas jugada
 	// hacemos la consulta 
 	err=mysql_query (conn, consulta); 
 	if (err!=0) {
-		respuesta_servidor_sql = 3;//error al consultar datos 
 		printf ("Error al consultar datos de la base %u %s\n",
 				mysql_errno(conn), mysql_error(conn));
 		exit (1);
@@ -208,7 +205,7 @@ int CountGames(char username[100])//funcion para ver el total de partidas jugada
 		if (respuesta_cuenta!=NULL)
 			respuesta_servidor_sql=atoi(respuesta_cuenta);//exito
 		else
-			respuesta_servidor_sql=4;//error en cuenta
+			respuesta_servidor_sql=-1;//error en cuenta
 	}
 	// cerrar la conexion con el servidor MYSQL 
 	mysql_close (conn);
@@ -218,7 +215,7 @@ int CountGames(char username[100])//funcion para ver el total de partidas jugada
 
 
 
-char* viewScore(char username[100])//funcion para ver los puntos de una partida en especifico
+char* ViewScore(char username[100],char GameID[20])//funcion para ver los puntos de una partida en especifico
 {
 	char* respuesta_char_servidor_sql=malloc(512);
 	
@@ -249,7 +246,7 @@ char* viewScore(char username[100])//funcion para ver los puntos de una partida 
 	//construir consulta sql	
 	
 	//sprintf(consulta,"SELECT *, IF(Username_Player1='%s',Score_Player1,Score_Player2) AS Score FROM Games WHERE Game_ID=2 AND (Username_Player1='%s' OR Username_Player2='%s');",username,username,username);
-	sprintf(consulta,"SELECT * FROM Games WHERE Game_ID=2 AND (Username_Player1='%s' OR Username_Player2='%s');",username,username);
+	sprintf(consulta,"SELECT * FROM Games WHERE Game_ID=%s AND (Username_Player1='%s' OR Username_Player2='%s');",GameID,username,username);
 	// hacemos la consulta 
 	err=mysql_query (conn, consulta); 
 	if (err!=0) {
@@ -270,7 +267,7 @@ char* viewScore(char username[100])//funcion para ver los puntos de una partida 
 	}
 	else
 	{
-		sprintf(respuesta_char_servidor_sql,"%s:%s puntos\n%s:%s",row[1],row[3],row[2],row[4]);
+		sprintf(respuesta_char_servidor_sql,"%s: %s puntos\n%s: %s puntos",row[1],row[3],row[2],row[4]);
 	}
 	// cerrar la conexion con el servidor MYSQL 
 	mysql_close (conn);
@@ -281,6 +278,7 @@ char* viewScore(char username[100])//funcion para ver los puntos de una partida 
 //main
 int main(int argc, char *argv[])
 {
+	int puerto=9081;
 	int sock_conn, sock_listen, ret;
 	struct sockaddr_in serv_adr;
 	
@@ -289,7 +287,14 @@ int main(int argc, char *argv[])
 	char respuesta[512];
 	int respuesta_servidor_sql;
 	char respuesta_char_servidor_sql[512];
+	
+	
+	//variables para Login
+	int codigo_login;
 	char username_loggedin[100];
+	
+	//variable para ViewScore
+	char GameID[20];
 	
 	// INICIALIZACIONES
 	// Se abre el socket
@@ -301,8 +306,8 @@ int main(int argc, char *argv[])
 	// asocia el socket a cualquiera de las IP de la maquina. 
 	//htonl formatea el numero que recibe al formato necesario
 	serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
-	// escucharemos en el port 9050
-	serv_adr.sin_port = htons(9088);
+	// escucharemos en el port 
+	serv_adr.sin_port = htons(puerto);
 	if (bind(sock_listen, (struct sockaddr *) &serv_adr, sizeof(serv_adr)) < 0)
 		printf ("Error al bind");
 	//La cola de peticiones pendientes no podr? ser superior a 4 Que quiere decir???
@@ -351,16 +356,19 @@ int main(int argc, char *argv[])
 			}
 			else if (codigo == 2)//iniciar sesion
 			{
-				respuesta_servidor_sql = Login(peticion_servidor);
-				if (respuesta_servidor_sql==0)
+				strcpy(respuesta_char_servidor_sql,Login(peticion_servidor));
+				char* q = strtok(respuesta_char_servidor_sql, "/");
+				int codigo_login = atoi(q);
+				
+				if (codigo_login==0)
 				{
 					strcpy(username_loggedin,strtok(NULL, "/"));
 					strcpy(respuesta, "Login correcto");
 				}
-				else if(respuesta_servidor_sql==4)
+				else if(codigo_login==-1)
 				{
 					strcpy(respuesta, "Password Incorrecto");
-				}else if(respuesta_servidor_sql==5)
+				}else if(codigo_login==-2)
 				{
 					strcpy(respuesta, "Username Incorrecto");
 				}else
@@ -372,8 +380,10 @@ int main(int argc, char *argv[])
 				respuesta_servidor_sql = CountGames(username_loggedin);
 				sprintf(respuesta, "%d", respuesta_servidor_sql);
 			}else if(codigo==4)
-			{
-				strcpy(respuesta_char_servidor_sql,viewScore(username_loggedin));
+			{	
+				char* r = strtok(peticion_servidor, "/");
+				strcpy(GameID,strtok(NULL,"/"));
+				strcpy(respuesta_char_servidor_sql,ViewScore(username_loggedin,GameID));
 				strcpy(respuesta,respuesta_char_servidor_sql);
 			}
 			if (codigo !=0){
