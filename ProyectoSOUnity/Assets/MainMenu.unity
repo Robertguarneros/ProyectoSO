@@ -2032,7 +2032,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &489065068
 Transform:
   m_ObjectHideFlags: 0
@@ -4407,7 +4407,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1478682476
 Transform:
   m_ObjectHideFlags: 0
@@ -4446,6 +4446,9 @@ MonoBehaviour:
   connectedLabel: {fileID: 158245126}
   errorLabel: {fileID: 329374345}
   disconnectLabel: {fileID: 1104061127}
+  resultCountGames: {fileID: 0}
+  resultViewScore: {fileID: 0}
+  GameIDInput: {fileID: 0}
   registradoLabel: {fileID: 544837107}
   loginSuccesfulLabel: {fileID: 1184720465}
   UsernameReg: {fileID: 1410811196}

@@ -9,14 +9,15 @@ using TMPro;
 using UnityEditor.VersionControl;
 using System.Text;
 using UnityEngine.SceneManagement;
+using Unity.VisualScripting;
 
 public class MainMenu : MonoBehaviour
 {
-    Socket server;
+    public static Socket server;
+    
     public GameObject connectedLabel;
     public GameObject errorLabel;
     public GameObject disconnectLabel;
-
 
     public TextMeshProUGUI registradoLabel;
     public TextMeshProUGUI loginSuccesfulLabel;
@@ -27,23 +28,25 @@ public class MainMenu : MonoBehaviour
     public TMP_InputField UsernameLog;
     public TMP_InputField PasswordLog;
 
+    int puerto = 9081;
+
     //Funcion para conectarse al servidor
     public void Connect()
     {
         //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
         //al que deseamos conectarnos
         IPAddress direc = IPAddress.Parse("192.168.56.102");
-        IPEndPoint ipep = new IPEndPoint(direc, 9088);
+        IPEndPoint ipep = new IPEndPoint(direc, puerto);
 
         //Creamos el socket 
         server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         try
         {
-           server.Connect(ipep);//Intentamos conectar el socket
+            server.Connect(ipep);//Intentamos conectar el socket
             connectedLabel.SetActive(true);
             disconnectLabel.SetActive(false);
             errorLabel.SetActive(false);
-            
+
         }
         catch (SocketException)
         {
@@ -72,7 +75,7 @@ public class MainMenu : MonoBehaviour
     //Primera consulta, registrar un usuario nuevo
     public void RegisterUser()
     {
-        string mensaje = "1/" + UsernameReg.text + "/" + PasswordReg.text  + "/" + NameReg.text;
+        string mensaje = "1/" + UsernameReg.text + "/" + PasswordReg.text + "/" + NameReg.text;
         //Try para evitar ensenar mensaje de que el usuario no se ha conectado al servidor
         try
         {
@@ -112,9 +115,11 @@ public class MainMenu : MonoBehaviour
             server.Receive(msg2);
             mensaje = Encoding.ASCII.GetString(msg2).Split('\0')[0];
             Debug.Log(mensaje);//mensaje en consola para ver que regresa el servidor
-            if (mensaje == "Login correcto")
+            if (mensaje == "Login correcto") 
+            {
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
-                //loginSuccesfulLabel.text = "Credenciales correctas";
+                loginSuccesfulLabel.text = "Credenciales correctas";
+            }
             else if (mensaje == "Password Incorrecto")
                 loginSuccesfulLabel.text = "Password Incorrecto";
             else if (mensaje == "Username Incorrecto")
@@ -127,4 +132,5 @@ public class MainMenu : MonoBehaviour
             loginSuccesfulLabel.text = "No estas conectado al servidor";
         }
     }
+    
 }
