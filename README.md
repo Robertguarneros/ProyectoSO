@@ -41,4 +41,6 @@ Si se hace un cambio antes de la entrega de la v1.0 que sea relevante entonces e
 Si se hace arregla un bug entonces no hace falta agregar un tag pero ese commit se guardará con
 el nombre de "Cambios Realizados"
 
-
+Links Para Videos Entrega 1
+Parte 1:https://youtu.be/r3vxD0Sz3iw
+Parte 2:https://youtu.be/PK2-ek9aR8w
