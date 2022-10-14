@@ -42,5 +42,9 @@ Si se hace arregla un bug entonces no hace falta agregar un tag pero ese commit 
 el nombre de "Cambios Realizados"
 
 Links Para Videos Entrega 1
+Version 1
+Generada por Roberto
+Verificada por Roger
+Comunicada por Sergi
 Parte 1:https://youtu.be/r3vxD0Sz3iw
 Parte 2:https://youtu.be/PK2-ek9aR8w
