@@ -10,7 +10,9 @@
 #include <mysql.h>
 #include <pthread.h>
 
-
+//variables globales necesarias
+char respuesta_sql_char[512];//Aqui se reciben las respuestas y errores del servidor sql
+MYSQL *conn;
 //preguntas 
 //Es mejor guardar el username por parte del cliente no?
 
@@ -201,17 +203,15 @@ int Login(char peticion[512],MYSQL *conn)
 	//regresamos el resultado
 	return respuesta_funcion;
 }
-
-//Funcion para atender cliente
-void* ServeClient(void* socket, char respuesta_sql_char[512],MYSQL *conn)
+void* ServeClient(void* socket)
 {
 	int sock_conn;
 	int* s;
 	s = (int*)socket;
 	sock_conn = *s;
+	
 	int ret;
 	char peticion[512];
-	
 	
 	int respuesta_servidor_sql;
 	char respuesta_para_cliente[512]; 
@@ -219,7 +219,6 @@ void* ServeClient(void* socket, char respuesta_sql_char[512],MYSQL *conn)
 	int terminar = 0;
 	while (terminar == 0)
 	{
-		
 		ret = read(sock_conn, peticion, sizeof(peticion));
 		printf("Recibida una petición\n");
 		peticion[ret] = '\0';//Tenemos que a?adirle la marca de fin de string para que no escriba lo que hay despues en el buffer
@@ -284,20 +283,19 @@ void* ServeClient(void* socket, char respuesta_sql_char[512],MYSQL *conn)
 				sprintf(respuesta_para_cliente, "%s",respuesta_sql_char);
 			}
 		}
-		
-		
-		if (codigo != 0) 
-			write(sock_conn, respuesta_para_cliente, strlen(respuesta_para_cliente));	// Enviamos la respuesta
+		if (codigo != 0)
+		{
+			write(sock_conn, respuesta_para_cliente, strlen(respuesta_para_cliente));// Enviamos la respuesta
+		}
 	}
 	// Se acabo el servicio para este cliente
 	close(sock_conn);
-}
+} 
 //Main 
 int main(int argc, char *argv[]) 
 {
-	int puerto =9050;
-	char respuesta_sql_char[512];//Aqui se reciben las respuestas y errores del servidor sql
-	MYSQL *conn = ConnectToSQL(respuesta_sql_char);
+	int puerto =9063;	
+	conn = ConnectToSQL(respuesta_sql_char);
 	printf("%s\n",respuesta_sql_char);
 	
 	int sock_conn, sock_listen;
@@ -306,7 +304,7 @@ int main(int argc, char *argv[])
 	// Inicializaciones
 	// Abrimos el socket
 	if ((sock_listen = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-		printf("Error creant socket");
+		printf("Error creando socket");
 	
 	// Hacemos el bind
 	memset(&serv_adr, 0, sizeof(serv_adr));// Inicializa a cero serv_addr
@@ -323,6 +321,7 @@ int main(int argc, char *argv[])
 	if (listen(sock_listen, 3) < 0)
 		printf("Error en el Listen\n");
 	
+	
 	int i;
 	int sockets[100];
 	pthread_t thread;
@@ -335,10 +334,11 @@ int main(int argc, char *argv[])
 		
 		sockets[i] = sock_conn;
 		//sock_conn es el socket que usaremos para este cliente
-		// Crear thead y decirle lo que tiene que hacer
-		pthread_create(&thread, NULL, ServeClient(&sock_conn,respuesta_sql_char,conn), &sockets[i]);
-		i = i + 1;
 		
+		// Crear thead y decirle lo que tiene que hacer
+		
+		pthread_create(&thread, NULL, ServeClient, &sockets[i]);
+		i = i + 1;
 	}
 }
 

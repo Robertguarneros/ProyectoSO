@@ -48,3 +48,7 @@ Verificada por Roger
 Comunicada por Sergi
 Parte 1:https://youtu.be/r3vxD0Sz3iw
 Parte 2:https://youtu.be/PK2-ek9aR8w
+
+
+Links Para Videos Entrega 2
+
