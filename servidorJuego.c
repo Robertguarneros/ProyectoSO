@@ -234,54 +234,54 @@ void* ServeClient(void* socket, char respuesta_sql_char[512],MYSQL *conn)
 			respuesta_servidor_sql = RegisterUser(peticion, conn);
 			if (respuesta_servidor_sql==0)
 			{
-				strcpy(respuesta_para_cliente, "Registrado Correctamente\n");
+				strcpy(respuesta_para_cliente, "Registrado Correctamente");
 			}
 			else if (respuesta_servidor_sql==-2)
 			{
-				strcpy(respuesta_para_cliente, "Username ya existe, escoge otro Username\n");
+				strcpy(respuesta_para_cliente, "Username ya existe, escoge otro Username");
 			}else
 			{
-				strcpy(respuesta_para_cliente, "Error en el registro\n");
+				strcpy(respuesta_para_cliente, "Error en el registro");
 			}
 		}else if (codigo ==2)//login
 		{
 			respuesta_servidor_sql = Login(peticion, conn);
 			if (respuesta_servidor_sql==-1)
 			{
-				strcpy(respuesta_para_cliente, "Username Incorrecto o No Registrado\n");
+				strcpy(respuesta_para_cliente, "Username Incorrecto o No Registrado");
 			}
 			else if (respuesta_servidor_sql==-2)
 			{
-				strcpy(respuesta_para_cliente, "Password Incorrecto\n");
+				strcpy(respuesta_para_cliente, "Password Incorrecto");
 			}
 			else if(respuesta_servidor_sql==0)
 			{
-				sprintf(respuesta_para_cliente, "Login Correcto\n");
+				sprintf(respuesta_para_cliente, "Login Correcto");
 			}
 		}else if (codigo ==3)//contar partidas jugadas
 		{
 			respuesta_servidor_sql = CountGames(peticion, conn);
 			if (respuesta_servidor_sql==-1)
 			{
-				strcpy(respuesta_para_cliente, "Error en la consulta\n");
+				strcpy(respuesta_para_cliente, "Username Incorrecto o No Registrado");
 			}
 			else if (respuesta_servidor_sql==0)
 			{
-				strcpy(respuesta_para_cliente, "No se encontraron partidas\n");
+				strcpy(respuesta_para_cliente, "No se encontraron partidas");
 			}
 			else
 			{
-				sprintf(respuesta_para_cliente, "%d partidas\n",respuesta_servidor_sql);
+				sprintf(respuesta_para_cliente, "%d",respuesta_servidor_sql);
 			}
 		}else if (codigo==4)//ver resultados de una partida
 		{
 			respuesta_servidor_sql = ViewGameScore(peticion,respuesta_sql_char,conn);
 			if(respuesta_servidor_sql==-1)
 			{
-				sprintf(respuesta_para_cliente, "No se encontraron partidas\n");
+				sprintf(respuesta_para_cliente, "No se encontraron partidas");
 			}else if (respuesta_servidor_sql==0)
 			{
-				sprintf(respuesta_para_cliente, "%s\n",respuesta_sql_char);
+				sprintf(respuesta_para_cliente, "%s",respuesta_sql_char);
 			}
 		}
 		
@@ -295,7 +295,7 @@ void* ServeClient(void* socket, char respuesta_sql_char[512],MYSQL *conn)
 //Main 
 int main(int argc, char *argv[]) 
 {
-	int puerto =9060;
+	int puerto =9050;
 	char respuesta_sql_char[512];//Aqui se reciben las respuestas y errores del servidor sql
 	MYSQL *conn = ConnectToSQL(respuesta_sql_char);
 	printf("%s\n",respuesta_sql_char);
@@ -318,10 +318,10 @@ int main(int argc, char *argv[])
 	// establecemos el puerto de escucha
 	serv_adr.sin_port = htons(puerto);
 	if (bind(sock_listen, (struct sockaddr*)&serv_adr, sizeof(serv_adr)) < 0)
-		printf("Error al bind");
+		printf("Error al bind\n");
 	
 	if (listen(sock_listen, 3) < 0)
-		printf("Error en el Listen");
+		printf("Error en el Listen\n");
 	
 	int i;
 	int sockets[100];
