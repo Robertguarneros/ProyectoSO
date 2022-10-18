@@ -28,7 +28,7 @@ public class MainMenu : MonoBehaviour
     public TMP_InputField UsernameLog;
     public TMP_InputField PasswordLog;
 
-    int puerto = 9070;
+    int puerto = 9081;
 
     //Funcion para conectarse al servidor
     public void Connect()
