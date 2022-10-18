@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEngine.UI;
 using TMPro;
-using UnityEditor.VersionControl;
 using System.Text;
 using UnityEngine.SceneManagement;
 using System.IO.Pipes;
@@ -23,8 +22,9 @@ public class LevelSelectorMenu : MonoBehaviour
     public void CountGames()
     {
         server = MainMenu.server;
-        
-        string mensaje = "3/";
+
+        string mensaje = "3/" + MainMenu.username;
+        Debug.Log(mensaje);
         //Try para evitar ensenar mensaje de que el usuario no se ha conectado al servidor
         try
         {
@@ -38,10 +38,12 @@ public class LevelSelectorMenu : MonoBehaviour
             mensaje = Encoding.ASCII.GetString(msg2).Split('\0')[0];
             //Si el registro fue exitoso se muestra el mensaje
             Debug.Log(mensaje);//mensaje en consola para ver que regresa el servidor
-            if (mensaje == "-1")
-                resultCountGames.text = "No se han encontrado juegos";
+            if (mensaje == "Username Incorrecto o No Registrado")
+                resultCountGames.text = mensaje;
+            else if (mensaje == "No se encontraron partidas")
+                resultCountGames.text = mensaje;
             else
-                resultCountGames.text = "Se han encontrado " + mensaje + " juegos";
+                resultCountGames.text = "Se han encontrado " + mensaje + " partidas";
         }
         catch
         {
@@ -50,7 +52,8 @@ public class LevelSelectorMenu : MonoBehaviour
     }
     public void ViewScore()
     {
-        string mensaje = "4/" + GameIDInput.text;
+        string mensaje = "4/" + MainMenu.username + "/" + GameIDInput.text;
+        Debug.Log(mensaje);
         //Try para evitar ensenar mensaje de que el usuario no se ha conectado al servidor
         try
         {
@@ -64,9 +67,9 @@ public class LevelSelectorMenu : MonoBehaviour
             mensaje = Encoding.ASCII.GetString(msg2).Split('\0')[0];
             //Si el registro fue exitoso se muestra el mensaje
             Debug.Log(mensaje);//mensaje en consola para ver que regresa el servidor
-            if (string.IsNullOrEmpty(mensaje))
+            if (mensaje == "No se encontraron partidas")
             {
-                resultViewScore.text = "No se ha encontrado el juego";
+                resultViewScore.text = mensaje;
                 resultsViewScoreLabel.SetActive(true);
             }
             else
@@ -82,6 +85,7 @@ public class LevelSelectorMenu : MonoBehaviour
     }
     public void Logout()
     {
+        MainMenu.username = "";
         SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
     }
 }

@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEngine.UI;
 using TMPro;
-using UnityEditor.VersionControl;
 using System.Text;
 using UnityEngine.SceneManagement;
 using Unity.VisualScripting;
@@ -14,6 +13,7 @@ using Unity.VisualScripting;
 public class MainMenu : MonoBehaviour
 {
     public static Socket server;
+    public static string username;
     
     public GameObject connectedLabel;
     public GameObject errorLabel;
@@ -28,7 +28,7 @@ public class MainMenu : MonoBehaviour
     public TMP_InputField UsernameLog;
     public TMP_InputField PasswordLog;
 
-    int puerto = 9081;
+    int puerto = 9063;
 
     //Funcion para conectarse al servidor
     public void Connect()
@@ -46,12 +46,14 @@ public class MainMenu : MonoBehaviour
             connectedLabel.SetActive(true);
             disconnectLabel.SetActive(false);
             errorLabel.SetActive(false);
+            Debug.Log("Conexion Exitosa");
 
         }
         catch (SocketException)
         {
             //Si hay excepcion imprimimos error y salimos del programa con return 
             errorLabel.SetActive(true);
+            Debug.Log("Error al conectar con el servidor");
             return;
         }
 
@@ -60,22 +62,31 @@ public class MainMenu : MonoBehaviour
     public void Disconnect()
     {
         //Mensaje desconexion
-        string mensaje = "0/";
+        string mensaje = "0/Goodbye";
 
         byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
         server.Send(msg);
 
         // Nos desconectamos
-        server.Shutdown(SocketShutdown.Both);
-        server.Close();
-        connectedLabel.SetActive(false);
-        disconnectLabel.SetActive(true);
+        try
+        {
+            server.Shutdown(SocketShutdown.Both);
+            server.Close();
+            connectedLabel.SetActive(false);
+            disconnectLabel.SetActive(true);
+            Debug.Log("Desconexion Exitosa");
+        }
+        catch (SocketException)
+        {
+            Debug.Log("Error al desconectar con el servidor");
+        }
     }
 
     //Primera consulta, registrar un usuario nuevo
     public void RegisterUser()
     {
         string mensaje = "1/" + UsernameReg.text + "/" + PasswordReg.text + "/" + NameReg.text;
+        Debug.Log(mensaje);
         //Try para evitar ensenar mensaje de que el usuario no se ha conectado al servidor
         try
         {
@@ -91,8 +102,10 @@ public class MainMenu : MonoBehaviour
             Debug.Log(mensaje);//mensaje en consola para ver que regresa el servidor
             if (mensaje == "Registrado Correctamente")
                 registradoLabel.text = "Registrado Correctamente\nInicia Sesion";
+            else if (mensaje == "Username ya existe, escoge otro Username")
+                registradoLabel.text = mensaje;
             else
-                registradoLabel.text = "Error en el registro";
+                registradoLabel.text = mensaje;
         }
         catch
         {
@@ -115,15 +128,17 @@ public class MainMenu : MonoBehaviour
             server.Receive(msg2);
             mensaje = Encoding.ASCII.GetString(msg2).Split('\0')[0];
             Debug.Log(mensaje);//mensaje en consola para ver que regresa el servidor
-            if (mensaje == "Login correcto") 
+            if (mensaje == "Login Correcto") 
             {
+                username = UsernameLog.text;
+                Debug.Log(username);
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
                 loginSuccesfulLabel.text = "Credenciales correctas";
             }
             else if (mensaje == "Password Incorrecto")
-                loginSuccesfulLabel.text = "Password Incorrecto";
-            else if (mensaje == "Username Incorrecto")
-                loginSuccesfulLabel.text = "Username Incorrecto";
+                loginSuccesfulLabel.text = mensaje;
+            else if (mensaje == "Username Incorrecto o No Registrado")
+                loginSuccesfulLabel.text = mensaje;
             else
                 loginSuccesfulLabel.text = "Error al iniciar sesion, intenta nuevamente";
         }
