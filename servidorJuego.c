@@ -9,6 +9,7 @@
 #include <stdbool.h>  
 #include <mysql.h>
 #include <pthread.h>
+#include <errno.h>
 
 //estructura de usuarios con su socket para lista de conectados
 typedef struct
@@ -26,7 +27,7 @@ typedef struct
 //variables globales necesarias
 char respuesta_sql_char[512];//Aqui se reciben las respuestas y errores del servidor sql
 MYSQL *conn;
-bool loggedIn=false;
+bool loggedIn;
 //Variables necesarias para lista de conectados
 ConnectedUsers ListaConectados;
 char conectados[300];
@@ -296,6 +297,8 @@ void* ServeClient(void* socket)
 	char respuesta_para_cliente[512];
 	char username[100];//variable para que el thread recuerde el usuario de ese thread
 	
+	loggedIn=false;
+	
 	int terminar = 0;
 	while (terminar == 0)
 	{
@@ -362,7 +365,7 @@ void* ServeClient(void* socket)
 	}
 	// Se acabo el servicio para este cliente
 	close(sock_conn);
-	if (loggedIn=true)
+	if (loggedIn==true)
 	{
 		int removeUser = RemoveConnectedUser(&ListaConectados, username);
 		if(removeUser==0)
@@ -370,11 +373,10 @@ void* ServeClient(void* socket)
 		else if (removeUser==-1)
 			printf("Error al desconectar");
 	}
-	else if (loggedIn=false)
+	else if(loggedIn==false)
 	{
-		printf("Conexion cerrada antes del login");
+		printf("Conexion cerrada antes del login\n");
 	}
-	
 } 
 //Main 
 int main(int argc, char *argv[]) 
@@ -407,10 +409,22 @@ int main(int argc, char *argv[])
 		serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
 		// establecemos el puerto de escucha
 		serv_adr.sin_port = htons(puerto);
+		int opt = 1;
+		if (setsockopt(sock_listen, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt))<0)
+		{
+			perror("setsockopt");
+			exit(EXIT_FAILURE);
+		}
+		
+		if(setsockopt(sock_listen, SOL_SOCKET, SO_REUSEPORT, (char *)&opt, sizeof(opt))<0)
+		{
+			perror("setsockopt");
+			exit(EXIT_FAILURE);
+		}
 		
 		if (bind(sock_listen,(struct sockaddr*)&serv_adr, sizeof(serv_adr)) !=0)
 		{
-			printf("Error al bind\nIntentando de nuevo\n");
+			printf("Error al bind\nIntentando de nuevo\nError:%d\n",errno);
 			if(puerto==9050)
 				puerto=9051;
 			else if(puerto ==9051)
