@@ -13,11 +13,12 @@ using Unity.VisualScripting;
 public class MainMenu : MonoBehaviour
 {
     public static Socket server;
-    public static string username;
-    
+    public static bool conectado;
+
     public GameObject connectedLabel;
     public GameObject errorLabel;
     public GameObject disconnectLabel;
+    public GameObject reconnectButton;
 
     public TextMeshProUGUI registradoLabel;
     public TextMeshProUGUI loginSuccesfulLabel;
@@ -28,33 +29,47 @@ public class MainMenu : MonoBehaviour
     public TMP_InputField UsernameLog;
     public TMP_InputField PasswordLog;
 
-    int puerto = 9063;
-
     //Funcion para conectarse al servidor
     public void Connect()
     {
+        int puerto = 9050;
+        bool conexionCorrecta =false;
         //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
         //al que deseamos conectarnos
         IPAddress direc = IPAddress.Parse("192.168.56.102");
-        IPEndPoint ipep = new IPEndPoint(direc, puerto);
-
-        //Creamos el socket 
         server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        try
+        while (conexionCorrecta ==false)
         {
-            server.Connect(ipep);//Intentamos conectar el socket
-            connectedLabel.SetActive(true);
-            disconnectLabel.SetActive(false);
-            errorLabel.SetActive(false);
-            Debug.Log("Conexion Exitosa");
+            IPEndPoint ipep = new(direc, puerto);
+            //Creamos el socket 
+            try
+            {
+                server.Connect(ipep);//Intentamos conectar el socket
+                connectedLabel.SetActive(true);
+                disconnectLabel.SetActive(false);
+                errorLabel.SetActive(false);
+                conexionCorrecta = true;
+                conectado = true;
+                Debug.Log("Conexion Exitosa en puerto " + puerto);
+            }
+            catch (SocketException)
+            {
+                //Si hay excepcion imprimimos error y salimos del programa con return 
+                errorLabel.SetActive(true);
+                Debug.Log("Error al conectar con el servidor");
+            }
+            if (conexionCorrecta == false)
+            {
+                if (puerto == 9050)
+                {
+                    puerto = 9051;
+                }
+                else if (puerto == 9051)
+                    puerto = 9052;
+                else
+                    puerto = 9050;
+            }
 
-        }
-        catch (SocketException)
-        {
-            //Si hay excepcion imprimimos error y salimos del programa con return 
-            errorLabel.SetActive(true);
-            Debug.Log("Error al conectar con el servidor");
-            return;
         }
 
     }
@@ -62,7 +77,7 @@ public class MainMenu : MonoBehaviour
     public void Disconnect()
     {
         //Mensaje desconexion
-        string mensaje = "0/Goodbye";
+        string mensaje = "0/";
 
         byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
         server.Send(msg);
@@ -74,6 +89,7 @@ public class MainMenu : MonoBehaviour
             server.Close();
             connectedLabel.SetActive(false);
             disconnectLabel.SetActive(true);
+            conectado = false;
             Debug.Log("Desconexion Exitosa");
         }
         catch (SocketException)
@@ -82,6 +98,28 @@ public class MainMenu : MonoBehaviour
         }
     }
 
+    void Start()//ejecutada al iniciar escena
+    {
+        while (conectado == false)
+        {
+            Connect();
+        }
+    }
+    private void Update()
+    {
+        if (conectado == false)
+        {
+            disconnectLabel.SetActive(true);
+            reconnectButton.SetActive(true);
+        }
+    }
+    //Funcion para salir del juego y cerrar la conexion con el servidor
+    public void ExitGameBtn()
+    {
+        Disconnect();
+        Application.Quit();
+
+    }
     //Primera consulta, registrar un usuario nuevo
     public void RegisterUser()
     {
@@ -130,14 +168,15 @@ public class MainMenu : MonoBehaviour
             Debug.Log(mensaje);//mensaje en consola para ver que regresa el servidor
             if (mensaje == "Login Correcto") 
             {
-                username = UsernameLog.text;
-                Debug.Log(username);
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
                 loginSuccesfulLabel.text = "Credenciales correctas";
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+
             }
             else if (mensaje == "Password Incorrecto")
                 loginSuccesfulLabel.text = mensaje;
             else if (mensaje == "Username Incorrecto o No Registrado")
+                loginSuccesfulLabel.text = mensaje;
+            else if (mensaje == "Servidor lleno, intenta mas tarde")
                 loginSuccesfulLabel.text = mensaje;
             else
                 loginSuccesfulLabel.text = "Error al iniciar sesion, intenta nuevamente";

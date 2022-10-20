@@ -23,12 +23,11 @@ public class LevelSelectorMenu : MonoBehaviour
     {
         server = MainMenu.server;
 
-        string mensaje = "3/" + MainMenu.username;
+        string mensaje = "3/";
         Debug.Log(mensaje);
         //Try para evitar ensenar mensaje de que el usuario no se ha conectado al servidor
         try
         {
-            // Enviamos al servidor el nombre, usuario y contrasena
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             server.Send(msg);
 
@@ -52,15 +51,14 @@ public class LevelSelectorMenu : MonoBehaviour
     }
     public void ViewScore()
     {
-        string mensaje = "4/" + MainMenu.username + "/" + GameIDInput.text;
-        Debug.Log(mensaje);
+        server = MainMenu.server;
+        string mensaje = "4/" + GameIDInput.text;
         //Try para evitar ensenar mensaje de que el usuario no se ha conectado al servidor
         try
         {
-            // Enviamos al servidor el nombre, usuario y contrasena
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             server.Send(msg);
-
+            Debug.Log(mensaje);
             //Recibimos la respuesta del servidor
             byte[] msg2 = new byte[80];
             server.Receive(msg2);
@@ -85,7 +83,6 @@ public class LevelSelectorMenu : MonoBehaviour
     }
     public void Logout()
     {
-        MainMenu.username = "";
         SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
     }
 }
