@@ -379,7 +379,7 @@ void* ServeClient(void* socket)
 	}
 } 
 //Main 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
 	conn = ConnectToSQL(respuesta_sql_char);
 	printf("%s\n",respuesta_sql_char);
@@ -396,51 +396,42 @@ int main(int argc, char *argv[])
 	
 	bool bindExitoso;
 	int puerto=9050;
+	printf("Intentando bind\n");
+	// Hacemos el bind
+	memset(&serv_adr, 0, sizeof(serv_adr));// Inicializa a cero serv_addr
+	serv_adr.sin_family = AF_INET;
+		
+	// asocia el socket a cualquiera de las IP de la maquina. 
+	//htonl formatea el numero que recibe al formato necesario
+	serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
+	// establecemos el puerto de escucha
+	serv_adr.sin_port = htons(puerto);
+	bindExitoso=false;
+	char cwd[200];
 	while(bindExitoso==false)
 	{
-		printf("Intentando bind\n");
-		
-		// Hacemos el bind
-		memset(&serv_adr, 0, sizeof(serv_adr));// Inicializa a cero serv_addr
-		serv_adr.sin_family = AF_INET;
-		
-		// asocia el socket a cualquiera de las IP de la maquina. 
-		//htonl formatea el numero que recibe al formato necesario
-		serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
-		// establecemos el puerto de escucha
-		serv_adr.sin_port = htons(puerto);
-		int opt = 1;
-		if (setsockopt(sock_listen, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt))<0)
-		{
-			perror("setsockopt");
-			exit(EXIT_FAILURE);
-		}
-		
-		if(setsockopt(sock_listen, SOL_SOCKET, SO_REUSEPORT, (char *)&opt, sizeof(opt))<0)
-		{
-			perror("setsockopt");
-			exit(EXIT_FAILURE);
-		}
-		
 		if (bind(sock_listen,(struct sockaddr*)&serv_adr, sizeof(serv_adr)) !=0)
 		{
-			printf("Error al bind\nIntentando de nuevo\nError:%d\n",errno);
-			if(puerto==9050)
-				puerto=9051;
-			else if(puerto ==9051)
-				puerto = 9052;
-			else 
-				puerto = 9050;
+			printf("Error al bind:Error:%d\nIntentando de nuevo\n",errno);
+			//llamar al script para arreglar el problema, como hago para que siempre lo encuentre el programa??
+			char *getcwd(char *buf, size_t size);			
+			if (getcwd(cwd, sizeof(cwd)) != NULL) 
+			{
+				strcat(cwd,"/killPort.sh");
+				system(cwd);
+			} 
+			else
+				perror("getcwd() error");
 		}
 		else
 		{
-			bindExitoso=true;
+			bindExitoso = true;
 			printf("Bind realizado correctamente en puerto %d\n",puerto);
 		}
 	}
+	
 	if (listen(sock_listen, 3) < 0)
 		printf("Error en el Listen\n");
-	
 	
 	int i;
 	int sockets[100];
@@ -456,10 +447,9 @@ int main(int argc, char *argv[])
 		sockets[i] = sock_conn;
 		//sock_conn es el socket que usaremos para este cliente
 		
-		// Crear thead y decirle lo que tiene que hacer
+		// Crear thread y decirle lo que tiene que hacer
 		
 		pthread_create(&thread, NULL, ServeClient, &sockets[i]);
 		i = i + 1;
 	}
 }
-
