@@ -50,7 +50,7 @@ public class MainMenu : MonoBehaviour
                 errorLabel.SetActive(false);
                 conexionCorrecta = true;
                 conectado = true;
-                Debug.Log("Conexion Exitosa en puerto " + puerto);
+                Debug.Log("Conexion Exitosa");
             }
             catch (SocketException)
             {
@@ -58,20 +58,7 @@ public class MainMenu : MonoBehaviour
                 errorLabel.SetActive(true);
                 Debug.Log("Error al conectar con el servidor");
             }
-            if (conexionCorrecta == false)
-            {
-                if (puerto == 9050)
-                {
-                    puerto = 9051;
-                }
-                else if (puerto == 9051)
-                    puerto = 9052;
-                else
-                    puerto = 9050;
-            }
-
         }
-
     }
     //Funcion para desconectarse del servidor
     public void Disconnect()
@@ -100,7 +87,7 @@ public class MainMenu : MonoBehaviour
 
     void Start()//ejecutada al iniciar escena
     {
-        while (conectado == false)
+        if (conectado == false)
         {
             Connect();
         }

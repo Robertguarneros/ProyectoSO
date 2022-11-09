@@ -16,6 +16,7 @@ public class LevelSelectorMenu : MonoBehaviour
     public TextMeshProUGUI resultCountGames;
     public TextMeshProUGUI resultViewScore;
     public TMP_InputField GameIDInput;
+    public TextMeshProUGUI ConnectedUserListLbl;
     //para viewScores
     public GameObject resultsViewScoreLabel;
 
@@ -79,6 +80,35 @@ public class LevelSelectorMenu : MonoBehaviour
         catch
         {
             resultCountGames.text = "No estas conectado al servidor";
+        }
+    }
+    //Funcion para ver la lista de usuarios conectados
+    public void GetConnectedUsers()
+    {
+        server = MainMenu.server;
+
+        string mensaje = "5/";
+        Debug.Log(mensaje);
+        //Try para evitar ensenar mensaje de que el usuario no se ha conectado al servidor
+        try
+        {
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
+
+            //Recibimos la respuesta del servidor
+            byte[] msg2 = new byte[80];
+            server.Receive(msg2);
+            mensaje = Encoding.ASCII.GetString(msg2).Split('\0')[0];
+            //Si el registro fue exitoso se muestra el mensaje
+            Debug.Log(mensaje);//mensaje en consola para ver que regresa el servidor
+            if (mensaje == "No hay otros usuarios")
+                ConnectedUserListLbl.text = "No hay usuarios, solo tu estas en linea";
+            else
+                ConnectedUserListLbl.text = mensaje;
+        }
+        catch
+        {
+            ConnectedUserListLbl.text = "No estas conectado al servidor";
         }
     }
     public void Logout()
