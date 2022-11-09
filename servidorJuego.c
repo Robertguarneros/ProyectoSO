@@ -143,14 +143,25 @@ int RemoveConnectedUser(ConnectedUsers *list,char username[100])
 }
 
 //Funcion para ver los usuarios conectados
-void OnlineUsers(ConnectedUsers *list, char conectados[300])
+void OnlineUsers(ConnectedUsers *list, char conectados[300],char username[100])
 {
-	sprintf(conectados, "%d", list->num);
-	int i =0;
-	for(i=0;i<list->num;i++)
+	strcpy(conectados,"");
+	//sprintf(conectados, "%d", list->num);
+	//checamos si solo hay un usuario.De ser asi quiere decir que estamos solos
+	if(list->num==1)
 	{
-		sprintf(conectados, "%s/%s",conectados,list->user[i].username);
+		strcpy(conectados, "No hay otros usuarios");
 	}
+	else
+	{
+		int i =0;
+		for(i=0;i<list->num;i++)
+		{
+			if (strcmp(list->user[i].username,username)!=0)
+				sprintf(conectados, "%s\n%s",conectados,list->user[i].username);
+		}
+	}
+	
 }
 
 
@@ -357,7 +368,7 @@ void* ServeClient(void* socket)
 				sprintf(respuesta_para_cliente, "%s",respuesta_sql_char);
 		}else if(codigo==5)//ver lista de conectados
 		{
-			OnlineUsers(&ListaConectados, conectados);
+			OnlineUsers(&ListaConectados, conectados,username);
 			strcpy(respuesta_para_cliente, conectados);
 		}
 		if (codigo != 0)
@@ -413,7 +424,7 @@ int main(int argc, char *argv[])
 		if (bind(sock_listen,(struct sockaddr*)&serv_adr, sizeof(serv_adr)) !=0)
 		{
 			printf("Error al bind:Error:%d\nIntentando de nuevo\n",errno);
-			//llamar al script para arreglar el problema, como hago para que siempre lo encuentre el programa??
+			//llamar al script para arreglar el puerto
 			char *getcwd(char *buf, size_t size);			
 			if (getcwd(cwd, sizeof(cwd)) != NULL) 
 			{
