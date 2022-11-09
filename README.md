@@ -51,4 +51,8 @@ Parte 2:https://youtu.be/PK2-ek9aR8w
 
 
 Links Para Videos Entrega 2
+Version 2
+Generada por Sergi
+Verificada por Roberto
+Comunicada por Roger
 

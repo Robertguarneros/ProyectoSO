@@ -11,6 +11,13 @@
 #include <pthread.h>
 #include <errno.h>
 
+
+//Estructura para acceso excluyente cuando se comparte una estructura compartida
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+//Se pone "pthread_mutex_lock( &mutex );" antes de la operacion que no se puede interrumpir
+//se pone la operacion a realizar
+//se pone "pthread_mutex_unlock( &mutex );"
+
 //estructura de usuarios con su socket para lista de conectados
 typedef struct
 {
@@ -28,6 +35,7 @@ typedef struct
 char respuesta_sql_char[512];//Aqui se reciben las respuestas y errores del servidor sql
 MYSQL *conn;
 bool loggedIn;
+bool userwasloggedin=false;
 //Variables necesarias para lista de conectados
 ConnectedUsers ListaConectados;
 char conectados[300];
@@ -143,14 +151,25 @@ int RemoveConnectedUser(ConnectedUsers *list,char username[100])
 }
 
 //Funcion para ver los usuarios conectados
-void OnlineUsers(ConnectedUsers *list, char conectados[300])
+void OnlineUsers(ConnectedUsers *list, char conectados[300],char username[100])
 {
-	sprintf(conectados, "%d", list->num);
-	int i =0;
-	for(i=0;i<list->num;i++)
+	strcpy(conectados,"");
+	//sprintf(conectados, "%d", list->num);
+	//checamos si solo hay un usuario.De ser asi quiere decir que estamos solos
+	if(list->num==1)
 	{
-		sprintf(conectados, "%s/%s",conectados,list->user[i].username);
+		strcpy(conectados, "No hay otros usuarios");
 	}
+	else
+	{
+		int i =0;
+		for(i=0;i<list->num;i++)
+		{
+			if (strcmp(list->user[i].username,username)!=0)
+				sprintf(conectados, "%s\n%s",conectados,list->user[i].username);
+		}
+	}
+	
 }
 
 
@@ -268,12 +287,14 @@ int Login(char peticion[512],MYSQL *conn, int socket,char username[100])
 			rescmp2 = strcmp(password, db_password);
 			if ((rescmp1==0)&&(rescmp2==0)&&(ListaConectados.num<100))
 			{
+				pthread_mutex_lock(&mutex);
 				//agregamos el usuario a la lista de conectados ya que se mantendra conectado
 				connectUser = AddConnectedUser(&ListaConectados,username,socket);
 				if (connectUser==0)
 					respuesta_funcion=0;//Inicio de Sesion correcto
 				else if (connectUser==-1)
 					respuesta_funcion = -3;//no se puede iniciar sesion, servidor lleno
+				pthread_mutex_unlock(&mutex);
 			}
 			else if((rescmp1==0)&&(rescmp2!=0))
 				respuesta_funcion=-2;//Usuario Correcto pero contrasena incorrecta
@@ -357,7 +378,7 @@ void* ServeClient(void* socket)
 				sprintf(respuesta_para_cliente, "%s",respuesta_sql_char);
 		}else if(codigo==5)//ver lista de conectados
 		{
-			OnlineUsers(&ListaConectados, conectados);
+			OnlineUsers(&ListaConectados, conectados,username);
 			strcpy(respuesta_para_cliente, conectados);
 		}
 		if (codigo != 0)
@@ -367,13 +388,22 @@ void* ServeClient(void* socket)
 	close(sock_conn);
 	if (loggedIn==true)
 	{
+		pthread_mutex_lock(&mutex);//ahora no interrumpas
 		int removeUser = RemoveConnectedUser(&ListaConectados, username);
 		if(removeUser==0)
+		{
 			printf("%s se ha desconectado\n",username);
+			userwasloggedin = true;
+		}
 		else if (removeUser==-1)
 			printf("Error al desconectar");
+		pthread_mutex_unlock(&mutex);//ahora se puede interrumpir
 	}
-	else if(loggedIn==false)
+	else if(userwasloggedin)
+	{
+		printf("Conexion cerrada\n");
+	}
+	else
 	{
 		printf("Conexion cerrada antes del login\n");
 	}
@@ -413,7 +443,7 @@ int main(int argc, char *argv[])
 		if (bind(sock_listen,(struct sockaddr*)&serv_adr, sizeof(serv_adr)) !=0)
 		{
 			printf("Error al bind:Error:%d\nIntentando de nuevo\n",errno);
-			//llamar al script para arreglar el problema, como hago para que siempre lo encuentre el programa??
+			//llamar al script para arreglar el puerto
 			char *getcwd(char *buf, size_t size);			
 			if (getcwd(cwd, sizeof(cwd)) != NULL) 
 			{
