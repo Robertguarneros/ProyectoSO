@@ -11,6 +11,13 @@
 #include <pthread.h>
 #include <errno.h>
 
+
+//Estructura para acceso excluyente cuando se comparte una estructura compartida
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+//Se pone "pthread_mutex_lock( &mutex );" antes de la operacion que no se puede interrumpir
+//se pone la operacion a realizar
+//se pone "pthread_mutex_unlock( &mutex );"
+
 //estructura de usuarios con su socket para lista de conectados
 typedef struct
 {
@@ -28,6 +35,7 @@ typedef struct
 char respuesta_sql_char[512];//Aqui se reciben las respuestas y errores del servidor sql
 MYSQL *conn;
 bool loggedIn;
+bool userwasloggedin=false;
 //Variables necesarias para lista de conectados
 ConnectedUsers ListaConectados;
 char conectados[300];
@@ -279,12 +287,14 @@ int Login(char peticion[512],MYSQL *conn, int socket,char username[100])
 			rescmp2 = strcmp(password, db_password);
 			if ((rescmp1==0)&&(rescmp2==0)&&(ListaConectados.num<100))
 			{
+				pthread_mutex_lock(&mutex);
 				//agregamos el usuario a la lista de conectados ya que se mantendra conectado
 				connectUser = AddConnectedUser(&ListaConectados,username,socket);
 				if (connectUser==0)
 					respuesta_funcion=0;//Inicio de Sesion correcto
 				else if (connectUser==-1)
 					respuesta_funcion = -3;//no se puede iniciar sesion, servidor lleno
+				pthread_mutex_unlock(&mutex);
 			}
 			else if((rescmp1==0)&&(rescmp2!=0))
 				respuesta_funcion=-2;//Usuario Correcto pero contrasena incorrecta
@@ -378,13 +388,22 @@ void* ServeClient(void* socket)
 	close(sock_conn);
 	if (loggedIn==true)
 	{
+		pthread_mutex_lock(&mutex);//ahora no interrumpas
 		int removeUser = RemoveConnectedUser(&ListaConectados, username);
 		if(removeUser==0)
+		{
 			printf("%s se ha desconectado\n",username);
+			userwasloggedin = true;
+		}
 		else if (removeUser==-1)
 			printf("Error al desconectar");
+		pthread_mutex_unlock(&mutex);//ahora se puede interrumpir
 	}
-	else if(loggedIn==false)
+	else if(userwasloggedin)
+	{
+		printf("Conexion cerrada\n");
+	}
+	else
 	{
 		printf("Conexion cerrada antes del login\n");
 	}
