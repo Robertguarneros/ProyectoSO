@@ -12,6 +12,7 @@ using System.IO.Pipes;
 
 public class LevelSelectorMenu : MonoBehaviour
 {
+    public static bool loggedin;
     Socket server;
     public TextMeshProUGUI resultCountGames;
     public TextMeshProUGUI resultViewScore;
@@ -82,8 +83,8 @@ public class LevelSelectorMenu : MonoBehaviour
             resultCountGames.text = "No estas conectado al servidor";
         }
     }
-    //Funcion para ver la lista de usuarios conectados
-    public void GetConnectedUsers()
+    
+    public void GetConnectedUsers()//Funcion para ver la lista de usuarios conectados
     {
         server = MainMenu.server;
 

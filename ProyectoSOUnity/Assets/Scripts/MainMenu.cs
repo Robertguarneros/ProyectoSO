@@ -14,12 +14,13 @@ public class MainMenu : MonoBehaviour
 {
     public static Socket server;
     public static bool conectado;
+    public static bool loggedin;
 
-    public GameObject connectedLabel;
+    public GameObject connectedImage;
     public GameObject errorLabel;
-    public GameObject disconnectLabel;
+    public GameObject disconnectedImage;
     public GameObject reconnectButton;
-
+    
     public TextMeshProUGUI registradoLabel;
     public TextMeshProUGUI loginSuccesfulLabel;
 
@@ -29,8 +30,8 @@ public class MainMenu : MonoBehaviour
     public TMP_InputField UsernameLog;
     public TMP_InputField PasswordLog;
 
-    //Funcion para conectarse al servidor
-    public void Connect()
+   
+    public void Connect() //Funcion para conectarse al servidor
     {
         int puerto = 9050;
         bool conexionCorrecta =false;
@@ -45,8 +46,8 @@ public class MainMenu : MonoBehaviour
             try
             {
                 server.Connect(ipep);//Intentamos conectar el socket
-                connectedLabel.SetActive(true);
-                disconnectLabel.SetActive(false);
+                connectedImage.SetActive(true);
+                disconnectedImage.SetActive(false);
                 errorLabel.SetActive(false);
                 conexionCorrecta = true;
                 conectado = true;
@@ -60,8 +61,8 @@ public class MainMenu : MonoBehaviour
             }
         }
     }
-    //Funcion para desconectarse del servidor
-    public void Disconnect()
+    
+    public void Disconnect()//Funcion para desconectarse del servidor
     {
         //Mensaje desconexion
         string mensaje = "0/";
@@ -74,8 +75,8 @@ public class MainMenu : MonoBehaviour
         {
             server.Shutdown(SocketShutdown.Both);
             server.Close();
-            connectedLabel.SetActive(false);
-            disconnectLabel.SetActive(true);
+            connectedImage.SetActive(false);
+            disconnectedImage.SetActive(true);
             conectado = false;
             Debug.Log("Desconexion Exitosa");
         }
@@ -87,28 +88,34 @@ public class MainMenu : MonoBehaviour
 
     void Start()//ejecutada al iniciar escena
     {
+        if (loggedin)
+        {
+            Disconnect();//se agrega para que se desconecte el usuario al presionar logout(al iniciar la escena)
+            loggedin = false;
+        }
         if (conectado == false)
         {
             Connect();
         }
     }
-    private void Update()
+   
+    private void Update()//funcion que se ejecuta cada frame para verificar la conexion
     {
         if (conectado == false)
         {
-            disconnectLabel.SetActive(true);
+            disconnectedImage.SetActive(true);
             reconnectButton.SetActive(true);
         }
     }
-    //Funcion para salir del juego y cerrar la conexion con el servidor
-    public void ExitGameBtn()
+    
+    public void ExitGameBtn()//Funcion para salir del juego y cerrar la conexion con el servidor
     {
         Disconnect();
         Application.Quit();
 
     }
-    //Primera consulta, registrar un usuario nuevo
-    public void RegisterUser()
+    
+    public void RegisterUser()//Primera consulta, registrar un usuario nuevo
     {
         string mensaje = "1/" + UsernameReg.text + "/" + PasswordReg.text + "/" + NameReg.text;
         Debug.Log(mensaje);
@@ -137,8 +144,8 @@ public class MainMenu : MonoBehaviour
             registradoLabel.text = "No estas conectado al servidor";
         }
     }
-    //Funcion para inicar sesion
-    public void Login()
+    
+    public void Login()//Funcion para inicar sesion
     {
         string mensaje = "2/" + UsernameLog.text + "/" + PasswordLog.text;
         Debug.Log(mensaje);
@@ -157,7 +164,7 @@ public class MainMenu : MonoBehaviour
             {
                 loginSuccesfulLabel.text = "Credenciales correctas";
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
-
+                loggedin = true;
             }
             else if (mensaje == "Password Incorrecto")
                 loginSuccesfulLabel.text = mensaje;
