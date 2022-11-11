@@ -55,4 +55,6 @@ Version 2
 Generada por Sergi
 Verificada por Roberto
 Comunicada por Roger
-
+Parte Gráfica: https://youtu.be/I6Nkb9KlsWk
+Parte 1(códgio en C):https://youtu.be/PkRSZ7HAj-c
+Parte 2(unity):https://youtu.be/vJim8MQlaf0
