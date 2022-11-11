@@ -116,4 +116,8 @@ public class LevelSelectorMenu : MonoBehaviour
     {
         SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
     }
+    public void Play()
+    {
+        SceneManager.LoadScene("Levels",LoadSceneMode.Single);
+    }
 }

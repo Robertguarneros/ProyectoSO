@@ -33,11 +33,11 @@ public class MainMenu : MonoBehaviour
    
     public void Connect() //Funcion para conectarse al servidor
     {
-        int puerto = 9050;
+        int puerto = 50000;
         bool conexionCorrecta =false;
         //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
         //al que deseamos conectarnos
-        IPAddress direc = IPAddress.Parse("192.168.56.102");
+        IPAddress direc = IPAddress.Parse("147.83.117.22");
         server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         while (conexionCorrecta ==false)
         {
