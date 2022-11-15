@@ -9,175 +9,101 @@ using TMPro;
 using System.Text;
 using UnityEngine.SceneManagement;
 using Unity.VisualScripting;
+using Client;
 
-public class MainMenu : MonoBehaviour
+namespace MainMenuUI
 {
-    public static Socket server;
-    public static bool conectado;
-    public static bool loggedin;
 
-    public GameObject connectedImage;
-    public GameObject errorLabel;
-    public GameObject disconnectedImage;
-    public GameObject reconnectButton;
-    
-    public TextMeshProUGUI registradoLabel;
-    public TextMeshProUGUI loginSuccesfulLabel;
+    public class MainMenu : MonoBehaviour
+    {   
+        //variables generales
+        private ServerConnection serverConnection;
 
-    public TMP_InputField UsernameReg;
-    public TMP_InputField PasswordReg;
-    public TMP_InputField NameReg;
-    public TMP_InputField UsernameLog;
-    public TMP_InputField PasswordLog;
+        //variables de la ventana de login
+        public GameObject LoginUI;
+        
+        public GameObject connectedImage;
+        public GameObject errorLabel;
+        public GameObject disconnectedImage;
 
-   
-    public void Connect() //Funcion para conectarse al servidor
-    {
-        int puerto = 50000;
-        bool conexionCorrecta =false;
-        //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
-        //al que deseamos conectarnos
-        IPAddress direc = IPAddress.Parse("147.83.117.22");
-        server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        while (conexionCorrecta ==false)
-        {
-            IPEndPoint ipep = new(direc, puerto);
-            //Creamos el socket 
-            try
-            {
-                server.Connect(ipep);//Intentamos conectar el socket
-                connectedImage.SetActive(true);
-                disconnectedImage.SetActive(false);
-                errorLabel.SetActive(false);
-                conexionCorrecta = true;
-                conectado = true;
-                Debug.Log("Conexion Exitosa");
-            }
-            catch (SocketException)
-            {
-                //Si hay excepcion imprimimos error y salimos del programa con return 
-                errorLabel.SetActive(true);
-                Debug.Log("Error al conectar con el servidor");
-            }
-        }
-    }
-    
-    public void Disconnect()//Funcion para desconectarse del servidor
-    {
-        //Mensaje desconexion
-        string mensaje = "0/";
+        public TextMeshProUGUI registradoLabel;
+        public TextMeshProUGUI loginSuccesfulLabel;
 
-        byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-        server.Send(msg);
+        public TMP_InputField UsernameReg;
+        public TMP_InputField PasswordReg;
+        public TMP_InputField NameReg;
+        public TMP_InputField UsernameLog;
+        public TMP_InputField PasswordLog;
+        
+        
 
-        // Nos desconectamos
-        try
-        {
-            server.Shutdown(SocketShutdown.Both);
-            server.Close();
-            connectedImage.SetActive(false);
-            disconnectedImage.SetActive(true);
-            conectado = false;
-            Debug.Log("Desconexion Exitosa");
-        }
-        catch (SocketException)
-        {
-            Debug.Log("Error al desconectar con el servidor");
-        }
-    }
+        //variables del menu despues de iniciar sesion
+        public GameObject LoggedInUI;
+        
+        public TextMeshProUGUI resultCountGames;
+        public TextMeshProUGUI resultViewScore;
+        public TextMeshProUGUI ConnectedUserListLbl;
+        public TextMeshProUGUI logoutLbl;
 
-    void Start()//ejecutada al iniciar escena
-    {
-        if (loggedin)
-        {
-            Disconnect();//se agrega para que se desconecte el usuario al presionar logout(al iniciar la escena)
-            loggedin = false;
-        }
-        if (conectado == false)
-        {
-            Connect();
-        }
-    }
-   
-    private void Update()//funcion que se ejecuta cada frame para verificar la conexion
-    {
-        if (conectado == false)
-        {
-            disconnectedImage.SetActive(true);
-            reconnectButton.SetActive(true);
-        }
-    }
-    
-    public void ExitGameBtn()//Funcion para salir del juego y cerrar la conexion con el servidor
-    {
-        Disconnect();
-        Application.Quit();
+        public GameObject logoutLblObj;
+        public GameObject resultsViewScoreLabel;
+        
+        public TMP_InputField GameIDInput;
+        
+        //aqui empiezan las funcions y metodos
 
-    }
-    
-    public void RegisterUser()//Primera consulta, registrar un usuario nuevo
-    {
-        string mensaje = "1/" + UsernameReg.text + "/" + PasswordReg.text + "/" + NameReg.text;
-        Debug.Log(mensaje);
-        //Try para evitar ensenar mensaje de que el usuario no se ha conectado al servidor
-        try
+        void Start()//ejecutada al iniciar escena
         {
-            // Enviamos al servidor el nombre, usuario y contrasena
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
+            serverConnection = ServerConnection.GetInstance();
+        }
+        public void ExitGameBtn()//Funcion para salir del juego y cerrar la conexion con el servidor
+        {
+            Application.Quit();
+        }
+        public void RegisterUser()//metodo para registrar un usuario nuevo
+        {
+            //enviamos al servidor el nombre, usuario y contrasena
+            string mensaje = "1/" + UsernameReg.text + "/" + PasswordReg.text + "/" + NameReg.text;
+            Debug.Log(mensaje);
+            serverConnection.SendMessage(mensaje);
+            Debug.Log("Enviado");
+        }
+        public void Login()//metodo para inicar sesion
+        {
+            //enviamos al servidor el usuario y contrasena
+            string mensaje = "2/" + UsernameLog.text + "/" + PasswordLog.text;
+            Debug.Log(mensaje);
+            serverConnection.SendMessage(mensaje);
+            Debug.Log("Enviado");
+        }
+        public void CountGames()//metodo para contar el numero de partidas jugadas
+        {
+            string mensaje = "3/";
+            Debug.Log(mensaje);
+            serverConnection.SendMessage(mensaje);
+            Debug.Log("Enviado");
 
-            //Recibimos la respuesta del servidor
-            byte[] msg2 = new byte[80];
-            server.Receive(msg2);
-            mensaje = Encoding.ASCII.GetString(msg2).Split('\0')[0];
-            //Si el registro fue exitoso se muestra el mensaje
-            Debug.Log(mensaje);//mensaje en consola para ver que regresa el servidor
-            if (mensaje == "Registrado Correctamente")
-                registradoLabel.text = "Registrado Correctamente\nInicia Sesion";
-            else if (mensaje == "Username ya existe, escoge otro Username")
-                registradoLabel.text = mensaje;
-            else
-                registradoLabel.text = mensaje;
         }
-        catch
+        public void ViewScore()//metodo para ver el resultado de una partida
         {
-            registradoLabel.text = "No estas conectado al servidor";
+            string mensaje = "4/" + GameIDInput.text;
+            Debug.Log(mensaje);
+            serverConnection.SendMessage(mensaje);
+            Debug.Log("Enviado");
         }
-    }
-    
-    public void Login()//Funcion para inicar sesion
-    {
-        string mensaje = "2/" + UsernameLog.text + "/" + PasswordLog.text;
-        Debug.Log(mensaje);
-        try
+        public void GetConnectedUsers()//metodo para ver la lista de usuarios conectados
         {
-            // Enviamos al servidor el nombre, usuario y contrasena
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
-
-            //Recibimos la respuesta del servidor
-            byte[] msg2 = new byte[80];
-            server.Receive(msg2);
-            mensaje = Encoding.ASCII.GetString(msg2).Split('\0')[0];
-            Debug.Log(mensaje);//mensaje en consola para ver que regresa el servidor
-            if (mensaje == "Login Correcto") 
-            {
-                loginSuccesfulLabel.text = "Credenciales correctas";
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
-                loggedin = true;
-            }
-            else if (mensaje == "Password Incorrecto")
-                loginSuccesfulLabel.text = mensaje;
-            else if (mensaje == "Username Incorrecto o No Registrado")
-                loginSuccesfulLabel.text = mensaje;
-            else if (mensaje == "Servidor lleno, intenta mas tarde")
-                loginSuccesfulLabel.text = mensaje;
-            else
-                loginSuccesfulLabel.text = "Error al iniciar sesion, intenta nuevamente";
+            string mensaje = "5/";
+            Debug.Log(mensaje);
+            serverConnection.SendMessage(mensaje);
+            Debug.Log("Enviado");
         }
-        catch
+        public void Logout()//metodo para cerrar sesion 
         {
-            loginSuccesfulLabel.text = "No estas conectado al servidor";
+            string mensaje = "6/";
+            Debug.Log(mensaje);
+            serverConnection.SendMessage(mensaje);
+            Debug.Log("Enviado");
         }
     }
     
