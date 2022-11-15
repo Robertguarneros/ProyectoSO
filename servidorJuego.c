@@ -6,11 +6,13 @@
 #include <netinet/in.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <stdbool.h>  
+#include <stdbool.h>
 #include <mysql.h>
 #include <pthread.h>
 #include <errno.h>
+#include <my_global.h>
 
+int puerto=50000;//puertos para shiva 50000-50003
 
 //Estructura para acceso excluyente cuando se comparte una estructura compartida
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -34,22 +36,22 @@ typedef struct
 //variables globales necesarias
 char respuesta_sql_char[512];//Aqui se reciben las respuestas y errores del servidor sql
 MYSQL *conn;
-bool loggedIn;
-bool userwasloggedin=false;
 //Variables necesarias para lista de conectados
 ConnectedUsers ListaConectados;
 char conectados[300];
+int i;
+int sockets[100];
 //Declaracion de funciones
 //Funcion para crear una conexion con el servidor SQL
 MYSQL * ConnectToSQL(char respuesta_sql_char[512])
 {
 	MYSQL *conn;
 	//parametros para inicializar la conexion
-	char *server = "localhost";//servidor
+	char *server = "shiva2.upc.es";//servidor
 	char *user = "root";//usuario
 	char *password = "mysql";//contrasena
-	char *database = "ProyectoSO";//base de datos que usremos
-	//Creamos una conexion al servidor MYSQL 
+	char *database = "M01_Runner2057";//base de datos que usremos
+	//Creamos una conexion al servidor MYSQL
 	conn = mysql_init(NULL);
 	if (conn==NULL) {
 		sprintf(respuesta_sql_char,"Error al crear la conexion: %u %s", mysql_errno(conn), mysql_error(conn));
@@ -78,9 +80,8 @@ int QuerySQL(char consulta[512], MYSQL *conn, MYSQL_ROW *row)
 	MYSQL_RES *resultado;
 	int err;
 	int resultado_consulta;
-	
 	err = mysql_query(conn, consulta);
-	if (err!=0 && err!=1) 
+	if (err!=0 && err!=1)
 	{
 		resultado_consulta = -1;//Error al consultar la base de datos
 		exit (1);
@@ -91,7 +92,7 @@ int QuerySQL(char consulta[512], MYSQL *conn, MYSQL_ROW *row)
 	else if(err==0)
 	{
 		//recogemos el resultado de la consulta
-		resultado = mysql_store_result(conn); 
+		resultado = mysql_store_result(conn);
 		if (resultado != NULL)
 		{
 			*row = mysql_fetch_row(resultado);
@@ -126,8 +127,10 @@ int UsernamePosition(ConnectedUsers *list,char username[100])
 			i++;
 	}
 	if (encontrado)
+	{
+		printf("Se encontro el usuario en la posicion %d\n",i);
 		return i;
-	else 
+	}else
 		return -1;
 }
 
@@ -138,8 +141,9 @@ int RemoveConnectedUser(ConnectedUsers *list,char username[100])
 	if (pos == -1)
 		return -1;
 	else{
+		printf("Eliminando el usuario de la posicion %d\n",pos);
 		int i;
-		for (i=0;i<list->num-1;i++)
+		for (i=pos;i<list->num-1;i++)
 		{
 			list->user[i]=list->user[i+1];
 			//strcpy(lista->conectados[i].nombre,lista->conectados[i+1].nombre);
@@ -154,7 +158,6 @@ int RemoveConnectedUser(ConnectedUsers *list,char username[100])
 void OnlineUsers(ConnectedUsers *list, char conectados[300],char username[100])
 {
 	strcpy(conectados,"");
-	//sprintf(conectados, "%d", list->num);
 	//checamos si solo hay un usuario.De ser asi quiere decir que estamos solos
 	if(list->num==1)
 	{
@@ -169,7 +172,6 @@ void OnlineUsers(ConnectedUsers *list, char conectados[300],char username[100])
 				sprintf(conectados, "%s\n%s",conectados,list->user[i].username);
 		}
 	}
-	
 }
 
 
@@ -182,16 +184,16 @@ int RegisterUser(char peticion[512],MYSQL *conn)
 	char consulta [512];//string para enviar la consulta a BBDD
 	MYSQL_ROW row;
 	int respuesta_funcion;
-	
+
 	strcpy(username,strtok(peticion, "/"));
 	strcpy(password,strtok(NULL, "/"));
 	strcpy(name,strtok(NULL, "/"));
-	
+
 	//Se construye la consulta sql
 	sprintf(consulta,"INSERT INTO Jugador VALUES('%s','%s','%s');",username,password,name);
 	// hacemos la consulta
 	respuesta_funcion=QuerySQL(consulta,conn,&row);
-	
+
 	//regresamos el resultado
 	return respuesta_funcion;
 }
@@ -201,12 +203,12 @@ int CountGames(char username[100], MYSQL *conn)
 	int cuenta;
 	MYSQL_ROW row;
 	int respuesta_funcion;
-	
+
 	char consulta [512];//string para enviar la consulta a BBDD
-	
-	//Se construye consulta sql	
+
+	//Se construye consulta sql
 	sprintf(consulta,"SELECT COUNT(Games.Game_ID) FROM Games WHERE Games.Username_Player1='%s' OR Games.Username_Player2='%s';",username,username);
-	// hacemos la consulta 
+	// hacemos la consulta
 	respuesta_funcion=QuerySQL(consulta,conn,&row);//hacemos consulta y recibimos respuesta
 	if(respuesta_funcion==0)
 	{
@@ -216,7 +218,7 @@ int CountGames(char username[100], MYSQL *conn)
 		}
 		else
 		{
-			cuenta =atoi(row[0]);//regresamos el valor de la cuenta 
+			cuenta =atoi(row[0]);//regresamos el valor de la cuenta
 		}
 	}
 	//regresamos el resultado
@@ -228,15 +230,14 @@ int ViewGameScore(char peticion[512],char respuesta_sql_char[512],MYSQL *conn,ch
 	MYSQL_ROW row;
 	int respuesta_query;
 	int respuesta_funcion;
-	
+
 	char GameID[100];
 	strcpy(GameID,strtok(peticion, "\0"));
-	
+
 	char consulta [512];//string para enviar la consulta a BBDD
 	sprintf(consulta,"SELECT * FROM Games WHERE Game_ID=%s AND (Username_Player1='%s' OR Username_Player2='%s');",GameID,username,username);
-	
 	respuesta_query=QuerySQL(consulta,conn,&row);//hacemos consulta y recibimos respuesta
-	
+
 	if(respuesta_query==0)
 	{
 		if (row == NULL)
@@ -258,23 +259,23 @@ int Login(char peticion[512],MYSQL *conn, int socket,char username[100])
 	MYSQL_ROW row;
 	int respuesta_query;
 	int respuesta_funcion;
-	
+
 	char password[100];
-	
+
 	char db_username[100];
 	char db_password[100];
 	int rescmp1;
 	int rescmp2;
 	int connectUser;
-	
+
 	strcpy(username,strtok(peticion, "/"));
 	strcpy(password,strtok(NULL, "/"));
-	
+
 	char consulta [512];//string para enviar la consulta a BBDD
 	sprintf(consulta,"SELECT * FROM Jugador WHERE Username='%s';",username);
-	
+
 	respuesta_query=QuerySQL(consulta,conn,&row);//hacemos consulta y recibimos respuesta
-	
+
 	if(respuesta_query==0)
 	{
 		if (row == NULL)
@@ -310,175 +311,164 @@ void* ServeClient(void* socket)
 	int* s;
 	s = (int*)socket;
 	sock_conn = *s;
-	
 	int ret;
 	char peticion[512];
-	
 	int respuesta_servidor_sql;
 	char respuesta_para_cliente[512];
 	char username[100];//variable para que el thread recuerde el usuario de ese thread
-	
-	loggedIn=false;
-	
+	bool loggedIn;
+
 	int terminar = 0;
 	while (terminar == 0)
 	{
 		ret = read(sock_conn, peticion, sizeof(peticion));
-		printf("Recibida una petición\n");
+		printf("Recibida una peticion:\n");
 		peticion[ret] = '\0';//Tenemos que anadirle la marca de fin de string para que no escriba lo que hay despues en el buffer
-		
+		printf("%s\n",peticion);
+		char notificacion[200];
 
 		char* p = strtok(peticion, "/");
 		int codigo = atoi(p);
 		p=strtok(NULL,"\0");
 		if(p != NULL)
 			strcpy(peticion,p);
-		
+
 		if (codigo == 0)
+		{
 			terminar = 1;
-		else if (codigo == 1)//registrar un usuario
-		{ 
+			strcpy(respuesta_para_cliente,"0/Cerrando Sesion");
+		}else if (codigo == 1)//registrar un usuario
+		{
 			respuesta_servidor_sql = RegisterUser(peticion, conn);
 			if (respuesta_servidor_sql==0)
-				strcpy(respuesta_para_cliente, "Registrado Correctamente");
+				strcpy(respuesta_para_cliente, "1/Registrado Correctamente");
 			else if (respuesta_servidor_sql==-2)
-				strcpy(respuesta_para_cliente, "Username ya existe, escoge otro Username");
+				strcpy(respuesta_para_cliente, "1/Username ya existe, escoge otro Username");
 			else
-				strcpy(respuesta_para_cliente, "Error en el registro");
-		}else if (codigo ==2)//login
+				strcpy(respuesta_para_cliente, "1/Error en el registro");
+		}else if (codigo == 2)//login
 		{
 			respuesta_servidor_sql = Login(peticion,conn,sock_conn,username);
-			
 			if (respuesta_servidor_sql==-1)
-				strcpy(respuesta_para_cliente, "Username Incorrecto o No Registrado");
+				strcpy(respuesta_para_cliente, "2/Username Incorrecto o No Registrado");
 			else if (respuesta_servidor_sql==-2)
-				strcpy(respuesta_para_cliente, "Password Incorrecto");
+				strcpy(respuesta_para_cliente, "2/Password Incorrecto");
 			else if (respuesta_servidor_sql == -3)
-				sprintf(respuesta_para_cliente, "Servidor lleno, intenta mas tarde");
+				sprintf(respuesta_para_cliente, "2/Servidor lleno, intenta mas tarde");
 			else if(respuesta_servidor_sql==0)
 			{
 				loggedIn=true;
-				sprintf(respuesta_para_cliente, "Login Correcto");
+				sprintf(respuesta_para_cliente, "2/Login Correcto");
 			}
-		}else if (codigo ==3)//contar partidas jugadas
+		}else if (codigo == 3)//contar partidas jugadas
 		{
 			respuesta_servidor_sql = CountGames(username, conn);
 			if (respuesta_servidor_sql==-1)
-				strcpy(respuesta_para_cliente, "Username Incorrecto o No Registrado");
+				strcpy(respuesta_para_cliente, "3/Username Incorrecto o No Registrado");
 			else if (respuesta_servidor_sql==0)
-				strcpy(respuesta_para_cliente, "No se encontraron partidas");
+				strcpy(respuesta_para_cliente, "3/No se encontraron partidas");
 			else
-				sprintf(respuesta_para_cliente, "%d",respuesta_servidor_sql);
-		}else if (codigo==4)//ver resultados de una partida
+				sprintf(respuesta_para_cliente, "3/%d",respuesta_servidor_sql);
+		}else if (codigo == 4)//ver resultados de una partida
 		{
 			respuesta_servidor_sql = ViewGameScore(peticion,respuesta_sql_char,conn,username);
 			if(respuesta_servidor_sql==-1)
-				sprintf(respuesta_para_cliente, "No se encontraron partidas");
+				sprintf(respuesta_para_cliente, "4/No se encontraron partidas");
 			else if (respuesta_servidor_sql==0)
-				sprintf(respuesta_para_cliente, "%s",respuesta_sql_char);
-		}else if(codigo==5)//ver lista de conectados
+				sprintf(respuesta_para_cliente, "4/%s",respuesta_sql_char);
+		}else if (codigo == 5)//ver lista de conectados
 		{
 			OnlineUsers(&ListaConectados, conectados,username);
-			strcpy(respuesta_para_cliente, conectados);
+			sprintf(respuesta_para_cliente,"5/%s" ,conectados);
+		}else if (codigo == 6)//logout, cerrar sesion y quitar cliente de lista de conectados
+		{
+			if (loggedIn==true)
+			{
+				pthread_mutex_lock(&mutex);//ahora no interrumpas
+				printf("Username:%s\n",username);
+				int removeUser = RemoveConnectedUser(&ListaConectados, username);
+				pthread_mutex_unlock(&mutex);//ahora se puede interrumpir
+				printf("Resultado de remover usuario:%d\n",removeUser);
+				if(removeUser==0)
+				{
+					printf("%s se ha desconectado\n",username);
+					strcpy(respuesta_para_cliente, "6/Desconectado");
+					loggedIn=false;
+				}
+				else if (removeUser==-1)
+				{
+					printf("Error al desconectar\n");
+					strcpy(respuesta_para_cliente,"6/Error al desconectar");
+				}
+			}
+			else if(loggedIn==false)
+			{
+				printf("No has iniciado sesion\n");
+				sprintf(respuesta_para_cliente,"6/No has iniciado sesion");
+			}
 		}
+
 		if (codigo != 0)
+		{
 			write(sock_conn, respuesta_para_cliente, strlen(respuesta_para_cliente));// Enviamos la respuesta
+			//enviamos una notificacion al hacer login de que un usuario se ha conectado
+			//if(codigo == 2 && respuesta_servidor_sql == 0)
+			//{
+			//	sprintf(notificacion, "7/%s se ha conectado",username);
+			//	int j;
+			//	for (j=0;j<1;j++)
+			//		write(sockets[j],notificacion,strlen(notificacion));
+			//}
+		}else
+			write(sock_conn, respuesta_para_cliente, strlen(respuesta_para_cliente));
 	}
 	// Se acabo el servicio para este cliente
 	close(sock_conn);
-	if (loggedIn==true)
-	{
-		pthread_mutex_lock(&mutex);//ahora no interrumpas
-		int removeUser = RemoveConnectedUser(&ListaConectados, username);
-		if(removeUser==0)
-		{
-			printf("%s se ha desconectado\n",username);
-			userwasloggedin = true;
-		}
-		else if (removeUser==-1)
-			printf("Error al desconectar");
-		pthread_mutex_unlock(&mutex);//ahora se puede interrumpir
-	}
-	else if(userwasloggedin)
-	{
-		printf("Conexion cerrada\n");
-	}
-	else
-	{
-		printf("Conexion cerrada antes del login\n");
-	}
-} 
-//Main 
+	printf("Conexion cerrada\n");
+}
+//Main
 int main(int argc, char *argv[])
 {
 	conn = ConnectToSQL(respuesta_sql_char);
 	printf("%s\n",respuesta_sql_char);
-	
 	int sock_conn, sock_listen;
 	struct sockaddr_in serv_adr;
-	
 	ListaConectados.num=0;
-	
+
 	// Inicializaciones
 	// Abrimos el socket
 	if ((sock_listen = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		printf("Error creando socket");
-	
-	bool bindExitoso;
-	int puerto=9050;
+
 	printf("Intentando bind\n");
 	// Hacemos el bind
 	memset(&serv_adr, 0, sizeof(serv_adr));// Inicializa a cero serv_addr
 	serv_adr.sin_family = AF_INET;
-		
-	// asocia el socket a cualquiera de las IP de la maquina. 
+
+	// asocia el socket a cualquiera de las IP de la maquina.
 	//htonl formatea el numero que recibe al formato necesario
 	serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
 	// establecemos el puerto de escucha
 	serv_adr.sin_port = htons(puerto);
-	bindExitoso=false;
-	char cwd[200];
-	while(bindExitoso==false)
-	{
-		if (bind(sock_listen,(struct sockaddr*)&serv_adr, sizeof(serv_adr)) !=0)
-		{
-			printf("Error al bind:Error:%d\nIntentando de nuevo\n",errno);
-			//llamar al script para arreglar el puerto
-			char *getcwd(char *buf, size_t size);			
-			if (getcwd(cwd, sizeof(cwd)) != NULL) 
-			{
-				strcat(cwd,"/killPort.sh");
-				system(cwd);
-			} 
-			else
-				perror("getcwd() error");
-		}
-		else
-		{
-			bindExitoso = true;
-			printf("Bind realizado correctamente en puerto %d\n",puerto);
-		}
-	}
-	
+	if (bind(sock_listen, (struct sockaddr*)&serv_adr, sizeof(serv_adr)) < 0)
+		printf("Error al bind");
+
 	if (listen(sock_listen, 3) < 0)
 		printf("Error en el Listen\n");
-	
-	int i;
-	int sockets[100];
+
 	pthread_t thread;
 	i = 0;
 	for (;;) {
 		printf("Escuchando\n");
-		
+
 		sock_conn = accept(sock_listen, NULL, NULL);
-		
+
 		printf("He recibido conexion\n");
-		
+
 		sockets[i] = sock_conn;
 		//sock_conn es el socket que usaremos para este cliente
-		
 		// Crear thread y decirle lo que tiene que hacer
-		
+
 		pthread_create(&thread, NULL, ServeClient, &sockets[i]);
 		i = i + 1;
 	}

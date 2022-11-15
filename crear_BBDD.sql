@@ -1,7 +1,7 @@
-DROP DATABASE IF EXISTS ProyectoSO;
-CREATE DATABASE ProyectoSO;-- Creamos base de datos
+DROP DATABASE IF EXISTS M01_Runner2057;
+CREATE DATABASE M01_Runner2057;-- Creamos base de datos
 
-USE ProyectoSO;-- seleccionamos nuestra nueva BBDD
+USE M01_Runner2057;-- seleccionamos nuestra nueva BBDD
 
 CREATE TABLE Jugador(
 	Username VARCHAR(30) PRIMARY KEY NOT NULL,
