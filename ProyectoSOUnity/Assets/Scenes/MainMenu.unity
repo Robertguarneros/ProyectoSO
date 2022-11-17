@@ -1974,7 +1974,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &329374346
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3419,7 +3419,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &470957103
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3437,7 +3437,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 861, y: 363}
+  m_AnchoredPosition: {x: 1100, y: 716}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &470957104
@@ -3460,7 +3460,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: new user connected
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4b197cff2b349514296012692c44b20e, type: 2}
   m_sharedMaterial: {fileID: 6600384520348267975, guid: 4b197cff2b349514296012692c44b20e, type: 2}
@@ -3911,7 +3911,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 516.1925
+  orthographic size: 562.2932
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -6009,7 +6009,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1100170349
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6050,7 +6050,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: T
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4b197cff2b349514296012692c44b20e, type: 2}
   m_sharedMaterial: {fileID: 6600384520348267975, guid: 4b197cff2b349514296012692c44b20e, type: 2}
@@ -8399,6 +8399,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50a6ca1e30ac1fa46b51b242b2b864fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  MainMenuUI: {fileID: 1478682475}
   LoginUI: {fileID: 489065067}
   connectedImage: {fileID: 1738883091}
   errorLabel: {fileID: 329374345}

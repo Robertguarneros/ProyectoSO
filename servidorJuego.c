@@ -12,7 +12,7 @@
 #include <errno.h>
 #include <my_global.h>
 
-int puerto=50000;//puertos para shiva 50000-50003
+int puerto=50002;//puertos para shiva 50000-50003
 
 //Estructura para acceso excluyente cuando se comparte una estructura compartida
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -128,7 +128,7 @@ int UsernamePosition(ConnectedUsers *list,char username[100])
 	}
 	if (encontrado)
 	{
-		printf("Se encontro el usuario en la posicion %d\n",i);
+		//printf("Se encontro el usuario en la posicion %d\n",i);
 		return i;
 	}else
 		return -1;
@@ -141,7 +141,7 @@ int RemoveConnectedUser(ConnectedUsers *list,char username[100])
 	if (pos == -1)
 		return -1;
 	else{
-		printf("Eliminando el usuario de la posicion %d\n",pos);
+		//printf("Eliminando el usuario de la posicion %d\n",pos);
 		int i;
 		for (i=pos;i<list->num-1;i++)
 		{
@@ -218,7 +218,7 @@ int CountGames(char username[100], MYSQL *conn)
 		}
 		else
 		{
-			cuenta =atoi(row[0]);//regresamos el valor de la cuenta
+			cuenta=atoi(row[0]);//regresamos el valor de la cuenta
 		}
 	}
 	//regresamos el resultado
@@ -273,33 +273,39 @@ int Login(char peticion[512],MYSQL *conn, int socket,char username[100])
 
 	char consulta [512];//string para enviar la consulta a BBDD
 	sprintf(consulta,"SELECT * FROM Jugador WHERE Username='%s';",username);
-
-	respuesta_query=QuerySQL(consulta,conn,&row);//hacemos consulta y recibimos respuesta
-
-	if(respuesta_query==0)
+	//verificamos que el usuario no este conectado en otro ordenador
+	if(UsernamePosition(&ListaConectados,username)==-1)
 	{
-		if (row == NULL)
-			respuesta_funcion=-1;//Username Incorrecto o No existe
-		else
+		respuesta_query=QuerySQL(consulta,conn,&row);//hacemos consulta y recibimos respuesta
+
+		if(respuesta_query==0)
 		{
-			strcpy(db_username,row[0]);
-			strcpy(db_password,row[1]);
-			rescmp1 = strcmp(username,db_username);
-			rescmp2 = strcmp(password, db_password);
-			if ((rescmp1==0)&&(rescmp2==0)&&(ListaConectados.num<100))
+			if (row == NULL)
+				respuesta_funcion=-1;//Username Incorrecto o No existe
+			else
 			{
-				pthread_mutex_lock(&mutex);
-				//agregamos el usuario a la lista de conectados ya que se mantendra conectado
-				connectUser = AddConnectedUser(&ListaConectados,username,socket);
-				if (connectUser==0)
-					respuesta_funcion=0;//Inicio de Sesion correcto
-				else if (connectUser==-1)
-					respuesta_funcion = -3;//no se puede iniciar sesion, servidor lleno
-				pthread_mutex_unlock(&mutex);
+				strcpy(db_username,row[0]);
+				strcpy(db_password,row[1]);
+				rescmp1 = strcmp(username,db_username);
+				rescmp2 = strcmp(password, db_password);
+				if ((rescmp1==0)&&(rescmp2==0)&&(ListaConectados.num<100))
+				{
+					pthread_mutex_lock(&mutex);
+					//agregamos el usuario a la lista de conectados ya que se mantendra conectado
+					connectUser = AddConnectedUser(&ListaConectados,username,socket);
+					if (connectUser==0)
+						respuesta_funcion=0;//Inicio de Sesion correcto
+					else if (connectUser==-1)
+						respuesta_funcion = -3;//no se puede iniciar sesion, servidor lleno
+					pthread_mutex_unlock(&mutex);
+				}
+				else if((rescmp1==0)&&(rescmp2!=0))
+					respuesta_funcion=-2;//Usuario Correcto pero contrasena incorrecta
 			}
-			else if((rescmp1==0)&&(rescmp2!=0))
-				respuesta_funcion=-2;//Usuario Correcto pero contrasena incorrecta
 		}
+	}else
+	{
+		respuesta_funcion=-4;
 	}
 	//regresamos el resultado
 	return respuesta_funcion;
@@ -325,7 +331,6 @@ void* ServeClient(void* socket)
 		printf("Recibida una peticion:\n");
 		peticion[ret] = '\0';//Tenemos que anadirle la marca de fin de string para que no escriba lo que hay despues en el buffer
 		printf("%s\n",peticion);
-		char notificacion[200];
 
 		char* p = strtok(peticion, "/");
 		int codigo = atoi(p);
@@ -335,6 +340,25 @@ void* ServeClient(void* socket)
 
 		if (codigo == 0)
 		{
+			if (loggedIn==true)
+			{
+				pthread_mutex_lock(&mutex);//ahora no interrumpir
+				int removeUser = RemoveConnectedUser(&ListaConectados, username);//eliminamos de lista de conectados
+				pthread_mutex_unlock(&mutex);//ahora se puede interrumpir
+				if(removeUser==0)
+				{
+					printf("%s se ha desconectado\n",username);
+					loggedIn=false;
+				}
+				else if (removeUser==-1)
+				{
+					printf("Error al desconectar\n");
+				}
+			}
+			else if(loggedIn==false)
+			{
+				printf("No has iniciado sesion\n");
+			}
 			terminar = 1;
 			strcpy(respuesta_para_cliente,"0/Cerrando Sesion");
 		}else if (codigo == 1)//registrar un usuario
@@ -359,6 +383,8 @@ void* ServeClient(void* socket)
 			{
 				loggedIn=true;
 				sprintf(respuesta_para_cliente, "2/Login Correcto");
+			}else if(respuesta_servidor_sql==-4){
+			sprintf(respuesta_para_cliente, "2/Usuario ya conectado, intenta con otro usuario");
 			}
 		}else if (codigo == 3)//contar partidas jugadas
 		{
@@ -385,10 +411,10 @@ void* ServeClient(void* socket)
 			if (loggedIn==true)
 			{
 				pthread_mutex_lock(&mutex);//ahora no interrumpas
-				printf("Username:%s\n",username);
+				//printf("Username:%s\n",username);
 				int removeUser = RemoveConnectedUser(&ListaConectados, username);
 				pthread_mutex_unlock(&mutex);//ahora se puede interrumpir
-				printf("Resultado de remover usuario:%d\n",removeUser);
+				//printf("Resultado de remover usuario:%d\n",removeUser);
 				if(removeUser==0)
 				{
 					printf("%s se ha desconectado\n",username);
@@ -408,19 +434,33 @@ void* ServeClient(void* socket)
 			}
 		}
 
-		if (codigo != 0)
+		if ((codigo != 0)||(codigo == 0))
 		{
 			write(sock_conn, respuesta_para_cliente, strlen(respuesta_para_cliente));// Enviamos la respuesta
-			//enviamos una notificacion al hacer login de que un usuario se ha conectado
-			//if(codigo == 2 && respuesta_servidor_sql == 0)
-			//{
-			//	sprintf(notificacion, "7/%s se ha conectado",username);
-			//	int j;
-			//	for (j=0;j<1;j++)
-			//		write(sockets[j],notificacion,strlen(notificacion));
-			//}
-		}else
-			write(sock_conn, respuesta_para_cliente, strlen(respuesta_para_cliente));
+			if(codigo == 2)//enviamos notifiacion de usuario conectado/desconectado
+			{
+				sprintf(respuesta_para_cliente,"7/%s se ha conectado",username);
+				int j;
+				pthread_mutex_lock(&mutex);
+				for (j=0;j<ListaConectados.num;j++)
+				{
+					printf("%s\n",respuesta_para_cliente);
+					write(sockets[j],respuesta_para_cliente,strlen(respuesta_para_cliente));
+				}
+				pthread_mutex_unlock(&mutex);
+			}else if (codigo == 6)
+			{
+				sprintf(respuesta_para_cliente,"7/%s se ha desconectado",username);
+				int j;
+				pthread_mutex_lock(&mutex);
+				for (j=0;j<ListaConectados.num;j++)
+				{
+					printf("%s\n",respuesta_para_cliente);
+					write(sockets[j],respuesta_para_cliente,strlen(respuesta_para_cliente));
+				}
+				pthread_mutex_unlock(&mutex);
+			}
+		}
 	}
 	// Se acabo el servicio para este cliente
 	close(sock_conn);

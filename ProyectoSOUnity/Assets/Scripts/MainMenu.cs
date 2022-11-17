@@ -18,6 +18,9 @@ namespace MainMenuUI
     {   
         //variables generales
         private ServerConnection serverConnection;
+        //variables main menu
+        public GameObject MainMenuUI;
+        
 
         //variables de la ventana de login
         public GameObject LoginUI;
@@ -103,7 +106,7 @@ namespace MainMenuUI
             string mensaje = "6/";
             Debug.Log(mensaje);
             serverConnection.SendMessage(mensaje);
-            Debug.Log("Enviado");
+            Debug.Log("Cerrando Sesion");
         }
     }
     

@@ -82,6 +82,8 @@ public class MessageParser : MonoBehaviour
                         mainMenu.loginSuccesfulLabel.text = message;
                     else if (message == "Servidor lleno, intenta mas tarde")
                         mainMenu.loginSuccesfulLabel.text = message;
+                    else if (message == "Usuario ya conectado, intenta con otro usuario")
+                        mainMenu.loginSuccesfulLabel.text = message;
                     else
                         mainMenu.loginSuccesfulLabel.text = "Error al iniciar sesion, intenta nuevamente";
                     break;
@@ -119,7 +121,6 @@ public class MessageParser : MonoBehaviour
                         mainMenu.loginSuccesfulLabel.text = "Inicia sesion nuevamente";
                         mainMenu.UsernameLog.text = "";
                         mainMenu.PasswordLog.text = "";
-                        //falta hacer que los text box se vacien
                     }
                     else if (message == "Error al desconectar")
                     {
@@ -129,6 +130,7 @@ public class MessageParser : MonoBehaviour
                     break;
                 case 7://Notificacion nuevo usuario conectado
                     Debug.Log("Intentando mostrar notificacion");
+
                     StartCoroutine(ShowUserJoinedNotification(message,5));
                     Debug.Log("Notificacion mostrada");
                     break;
@@ -139,8 +141,8 @@ public class MessageParser : MonoBehaviour
     }
     IEnumerator ShowUserJoinedNotification(string message, float delay)
     {
-        UserJoinedNotificationtxt.text = message;
         UserJoinedNotificationtxt.enabled = true;
+        UserJoinedNotificationtxt.text = message;
         yield return new WaitForSeconds(delay);
         UserJoinedNotificationtxt.enabled = false;
     }
@@ -196,11 +198,9 @@ public class MessageParser : MonoBehaviour
     void OnApplicationQuit()
     {
         Debug.Log("Application ending after " + Time.time + " seconds");
-        serverConnection.SendMessage("6/");
-        Debug.Log("Cerrando sesion");
         Debug.Log("Cerrando conexion");
         serverConnection.DisconnectFromServer();
         Debug.Log("Conexion cerrada");
-        Debug.Log("Application ending after " + Time.time + " seconds");
+        
     }
 }

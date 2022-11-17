@@ -3,6 +3,7 @@ using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
+using System.Collections;
 
 namespace Client
 { 
@@ -14,7 +15,7 @@ namespace Client
         IPEndPoint port;
         bool connected = false;
         static ServerConnection connection = null;
-        public int puerto = 50000;
+        public int puerto = 50002;
 
         //Constructor para inicializar la conexion
         private ServerConnection()
