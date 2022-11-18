@@ -61,3 +61,8 @@ Version 3
 Generada por Roger
 Verificada por Sergi
 Comunicada por Roberto
+Parte 1: https://www.youtube.com/watch?v=mm0f4AFQzgM
+Parte 2: https://www.youtube.com/watch?v=FWZfoornVGU
+Parte 3: https://www.youtube.com/watch?v=h5K3HbchOMc
+
+
