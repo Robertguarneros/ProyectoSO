@@ -52,9 +52,19 @@ namespace MainMenuUI
         public GameObject resultsViewScoreLabel;
         
         public TMP_InputField GameIDInput;
-        
-        //aqui empiezan las funcions y metodos
 
+        //variables para mandar invitacion
+        public TMP_InputField UsernameInviteInput;
+        public GameObject invitationResponseObj;
+        public TextMeshProUGUI invitationResponse;
+
+        //variables para aceptar o declinar invitacion
+        public TextMeshProUGUI UserHasInvitedYouLbl;
+        public GameObject InvitationBox;
+
+
+        //aqui empiezan las funcions y metodos
+        public string UserThatSentInvite;
         void Start()//ejecutada al iniciar escena
         {
             serverConnection = ServerConnection.GetInstance();
@@ -101,6 +111,30 @@ namespace MainMenuUI
             serverConnection.SendMessage(mensaje);
             Debug.Log("Enviado");
         }
+        public void SendInvite()//metodo para invitar a una partida
+        {
+            //enviamos invitacion
+            string mensaje = "8/" + UsernameInviteInput.text; 
+            Debug.Log(mensaje);
+            serverConnection.SendMessage(mensaje);
+            Debug.Log("Enviado");
+        }
+        public void AcceptInvite()//metodo para aceptar una invitacion
+        {
+            //enviamos mensaje aceptando la partida
+            string mensaje = "10/Accept/"+UserThatSentInvite;
+            Debug.Log(mensaje);
+            serverConnection.SendMessage(mensaje);
+            Debug.Log("Enviado");
+        }
+        public void DeclineInvite()//metodo para declinar una invitacion
+        {
+            //enviamos al servidor el mensaje de que se declino la partida
+            string mensaje = "10/Decline/"+UserThatSentInvite;
+            Debug.Log(mensaje);
+            serverConnection.SendMessage(mensaje);
+            Debug.Log("Enviado");
+        }
         public void Logout()//metodo para cerrar sesion 
         {
             string mensaje = "6/";
@@ -109,5 +143,4 @@ namespace MainMenuUI
             Debug.Log("Cerrando Sesion");
         }
     }
-    
 }

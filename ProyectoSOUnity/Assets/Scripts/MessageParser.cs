@@ -134,6 +134,42 @@ public class MessageParser : MonoBehaviour
                     StartCoroutine(ShowUserJoinedNotification(message,5));
                     Debug.Log("Notificacion mostrada");
                     break;
+                case 8://Invitation Sent
+                    if (message == "Invite Sent")
+                    {
+                        mainMenu.invitationResponse.text = "Invitation Sent, waiting for response";
+                        mainMenu.invitationResponseObj.SetActive(true);
+                    }
+                    else if (message == "Username does not exist or is not connected")
+                    {
+                        mainMenu.invitationResponse.text = message;
+                        mainMenu.invitationResponseObj.SetActive(true);
+                    }
+                    break;
+                case 9://Invitation Notification
+                    string[] userWhoSentInvite = message.Split('/');
+
+                    mainMenu.UserThatSentInvite = message;
+                    mainMenu.UserHasInvitedYouLbl.text ="New Invite from "+ message;
+                    mainMenu.InvitationBox.SetActive(true);
+                    break;
+                case 11:
+                    if (message == "Invitation Accepted")
+                    {
+                        mainMenu.invitationResponse.text = "Invitation Accepted";
+                        mainMenu.invitationResponseObj.SetActive(true);
+                    }
+                    else if (message == "Invitation Rejected")
+                    {
+                        mainMenu.invitationResponse.text = "Invitation Rejected";
+                        mainMenu.invitationResponseObj.SetActive(true);
+                    }
+                    else
+                    {
+                        mainMenu.invitationResponse.text = "Invitation Error";
+                        mainMenu.invitationResponseObj.SetActive(true);
+                    }
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException("Unknown value");
             }

@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include <errno.h>
 #include <my_global.h>
+#include <unistd.h>
 
 int puerto=50002;//puertos para shiva 50000-50003
 
@@ -32,7 +33,6 @@ typedef struct
 	User user[100];
 	int num;
 }ConnectedUsers;
-
 //variables globales necesarias
 char respuesta_sql_char[512];//Aqui se reciben las respuestas y errores del servidor sql
 MYSQL *conn;
@@ -153,7 +153,6 @@ int RemoveConnectedUser(ConnectedUsers *list,char username[100])
 		return 0;
 	}
 }
-
 //Funcion para ver los usuarios conectados
 void OnlineUsers(ConnectedUsers *list, char conectados[300],char username[100])
 {
@@ -173,8 +172,6 @@ void OnlineUsers(ConnectedUsers *list, char conectados[300],char username[100])
 		}
 	}
 }
-
-
 //Funcion para agregar jugadores,le pasamos la peticion pero ya sin el codigo de peticion
 int RegisterUser(char peticion[512],MYSQL *conn)
 {
@@ -432,6 +429,38 @@ void* ServeClient(void* socket)
 				printf("No has iniciado sesion\n");
 				sprintf(respuesta_para_cliente,"6/No has iniciado sesion");
 			}
+		}else if (codigo == 8)//Mandar Invitacion a un usario
+		{
+			int positionForInvite = UsernamePosition(&ListaConectados,peticion);
+			if(positionForInvite==-1)
+			{
+				sprintf(respuesta_para_cliente,"8/Username does not exist or is not connected");
+			}else{
+				sprintf(respuesta_para_cliente,"9/%s",username);
+				write(ListaConectados.user[positionForInvite].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
+				sprintf(respuesta_para_cliente,"8/Invite Sent");
+			}
+		}else if (codigo == 10)
+		{
+			char responseForInvite[20];
+			char userWhoInvited[20];
+			strcpy(responseForInvite,strtok(peticion, "/"));
+			strcpy(userWhoInvited,strtok(NULL, "\0"));
+			printf("Responseforinvite:%s\n",responseForInvite);
+			printf("userwhoinvited:%s\n",userWhoInvited);
+			int positionForResponse = UsernamePosition(&ListaConectados,userWhoInvited);
+			if(strcmp(responseForInvite,"Accept")==0)
+			{
+				sprintf(respuesta_para_cliente,"11/Invitation Accepted");
+				write(ListaConectados.user[positionForResponse].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
+			}else if (strcmp(responseForInvite,"Decline")==0)
+			{
+				sprintf(respuesta_para_cliente,"11/Invitation Rejected");
+				write(ListaConectados.user[positionForResponse].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
+			}else{
+				sprintf(respuesta_para_cliente,"11/Error");
+				write(ListaConectados.user[positionForResponse].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
+			}
 		}
 
 		if ((codigo != 0)||(codigo == 0))
@@ -439,24 +468,42 @@ void* ServeClient(void* socket)
 			write(sock_conn, respuesta_para_cliente, strlen(respuesta_para_cliente));// Enviamos la respuesta
 			if(codigo == 2)//enviamos notifiacion de usuario conectado/desconectado
 			{
-				sprintf(respuesta_para_cliente,"7/%s se ha conectado",username);
 				int j;
 				pthread_mutex_lock(&mutex);
 				for (j=0;j<ListaConectados.num;j++)
 				{
 					printf("%s\n",respuesta_para_cliente);
-					write(sockets[j],respuesta_para_cliente,strlen(respuesta_para_cliente));
+					if(j==UsernamePosition(&ListaConectados,username))
+					{
+						sprintf(respuesta_para_cliente,"7/Te has conectado/");
+					}else
+					{
+						sprintf(respuesta_para_cliente,"7/%s se ha conectado/",username);
+					}
+					write(ListaConectados.user[j].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
+					OnlineUsers(&ListaConectados, conectados,username);
+					sprintf(respuesta_para_cliente,"5/%s" ,conectados);
+					write(ListaConectados.user[j].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
 				}
 				pthread_mutex_unlock(&mutex);
 			}else if (codigo == 6)
 			{
-				sprintf(respuesta_para_cliente,"7/%s se ha desconectado",username);
 				int j;
 				pthread_mutex_lock(&mutex);
 				for (j=0;j<ListaConectados.num;j++)
 				{
 					printf("%s\n",respuesta_para_cliente);
-					write(sockets[j],respuesta_para_cliente,strlen(respuesta_para_cliente));
+					if(j==UsernamePosition(&ListaConectados,username))
+					{
+						sprintf(respuesta_para_cliente,"7/Te has desconectado/");
+					}else
+					{
+						sprintf(respuesta_para_cliente,"7/%s se ha desconectado/",username);
+					}
+					write(ListaConectados.user[j].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
+					OnlineUsers(&ListaConectados, conectados,username);
+					sprintf(respuesta_para_cliente,"5/%s" ,conectados);
+					write(ListaConectados.user[j].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
 				}
 				pthread_mutex_unlock(&mutex);
 			}
