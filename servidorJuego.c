@@ -13,7 +13,7 @@
 #include <my_global.h>
 #include <unistd.h>
 
-int puerto=50002;//puertos para shiva 50000-50003
+int puerto=50000;//puertos para shiva 50000-50003
 
 //Estructura para acceso excluyente cuando se comparte una estructura compartida
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -307,6 +307,44 @@ int Login(char peticion[512],MYSQL *conn, int socket,char username[100])
 	//regresamos el resultado
 	return respuesta_funcion;
 }
+//Funcion para agregar una partida
+int AddMatch(MYSQL *conn,char username1[100],char username2[100])
+{
+	char consulta [512];//string para enviar la consulta a BBDD
+	MYSQL_ROW row;
+	int respuesta_funcion;
+
+	//Se construye la consulta sql
+	sprintf(consulta,"INSERT INTO Games (Username_Player1, Username_Player2, Score_Player1, Score_Player2) VALUES('%s','%s',0,0);",username1,username2);
+	// hacemos la consulta
+	respuesta_funcion=QuerySQL(consulta,conn,&row);
+	//regresamos el resultado
+	return respuesta_funcion;
+}
+int GetLastMatchCreatedID(MYSQL *conn)
+{
+	char consulta [512];//string para enviar la consulta a BBDD
+	MYSQL_ROW row;
+	int respuesta_funcion;
+	int matchID;
+	//construimos consulta
+	sprintf(consulta,"SELECT LAST_INSERT_ID()");
+	// hacemos la consulta
+	respuesta_funcion=QuerySQL(consulta,conn,&row);
+	if(respuesta_funcion==0)
+	{
+		if (row == NULL)
+		{
+			matchID=-1;
+		}
+		else
+		{
+			matchID=atoi(row[0]);//regresamos el valor de la cuenta
+		}
+	}
+	//regresamos el resultado
+	return matchID;
+}
 //Funcion que atiende a cada cliente en un thread
 void* ServeClient(void* socket)
 {
@@ -320,6 +358,9 @@ void* ServeClient(void* socket)
 	char respuesta_para_cliente[512];
 	char username[100];//variable para que el thread recuerde el usuario de ese thread
 	bool loggedIn;
+	int currentlyinMatch=0;
+	char currentOponent[100];
+	int currentmatchID;
 
 	int terminar = 0;
 	while (terminar == 0)
@@ -431,36 +472,57 @@ void* ServeClient(void* socket)
 			}
 		}else if (codigo == 8)//Mandar Invitacion a un usario
 		{
-			int positionForInvite = UsernamePosition(&ListaConectados,peticion);
-			if(positionForInvite==-1)
+
+			printf("%d\n",currentlyinMatch);//0 libre, 1 ocupado
+			strcpy(currentOponent,peticion);
+			int positionForInvite = UsernamePosition(&ListaConectados,currentOponent);
+			if(currentlyinMatch==1)
 			{
-				sprintf(respuesta_para_cliente,"8/Username does not exist or is not connected");
-			}else{
-				sprintf(respuesta_para_cliente,"9/%s",username);
-				write(ListaConectados.user[positionForInvite].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
-				sprintf(respuesta_para_cliente,"8/Invite Sent");
+				sprintf(respuesta_para_cliente,"8/Wating for response");
 			}
+			else{
+
+				if(positionForInvite==-1)
+				{
+					sprintf(respuesta_para_cliente,"8/Username does not exist or is not connected");
+				}else{
+					currentlyinMatch=0;
+					sprintf(respuesta_para_cliente,"9/%s",username);
+					write(ListaConectados.user[positionForInvite].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
+					sprintf(respuesta_para_cliente,"8/Invite Sent");
+				}
+			}
+			printf("se ha enviado invitacion\n");
 		}else if (codigo == 10)
 		{
 			char responseForInvite[20];
 			char userWhoInvited[20];
 			strcpy(responseForInvite,strtok(peticion, "/"));
 			strcpy(userWhoInvited,strtok(NULL, "\0"));
-			printf("Responseforinvite:%s\n",responseForInvite);
-			printf("userwhoinvited:%s\n",userWhoInvited);
 			int positionForResponse = UsernamePosition(&ListaConectados,userWhoInvited);
 			if(strcmp(responseForInvite,"Accept")==0)
 			{
-				sprintf(respuesta_para_cliente,"11/Invitation Accepted");
+				currentlyinMatch=1;
+				strcpy(currentOponent,userWhoInvited);
+				int addmatch = AddMatch(conn, username,currentOponent);
+				currentmatchID = GetLastMatchCreatedID(conn);
+				sprintf(respuesta_para_cliente,"11/Invitation Accepted/%d",currentmatchID);
 				write(ListaConectados.user[positionForResponse].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
 			}else if (strcmp(responseForInvite,"Decline")==0)
 			{
 				sprintf(respuesta_para_cliente,"11/Invitation Rejected");
+				currentlyinMatch=0;
 				write(ListaConectados.user[positionForResponse].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
 			}else{
 				sprintf(respuesta_para_cliente,"11/Error");
+				currentlyinMatch=0;
 				write(ListaConectados.user[positionForResponse].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
 			}
+			sprintf(respuesta_para_cliente,"10/Response Sent");
+		}else if (codigo == 12)//le pasamos el match id al oponente para despues utilizarlo
+		{
+			currentmatchID=atoi(peticion);
+			sprintf(respuesta_para_cliente,"12/Obtained MatchID");
 		}
 
 		if ((codigo != 0)||(codigo == 0))
@@ -476,14 +538,14 @@ void* ServeClient(void* socket)
 					if(j==UsernamePosition(&ListaConectados,username))
 					{
 						sprintf(respuesta_para_cliente,"7/Te has conectado/");
+						write(ListaConectados.user[j].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
 					}else
 					{
 						sprintf(respuesta_para_cliente,"7/%s se ha conectado/",username);
+						write(ListaConectados.user[j].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
+						sprintf(respuesta_para_cliente,"13/");
+						write(ListaConectados.user[j].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
 					}
-					write(ListaConectados.user[j].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
-					OnlineUsers(&ListaConectados, conectados,username);
-					sprintf(respuesta_para_cliente,"5/%s" ,conectados);
-					write(ListaConectados.user[j].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
 				}
 				pthread_mutex_unlock(&mutex);
 			}else if (codigo == 6)
@@ -496,14 +558,14 @@ void* ServeClient(void* socket)
 					if(j==UsernamePosition(&ListaConectados,username))
 					{
 						sprintf(respuesta_para_cliente,"7/Te has desconectado/");
+						write(ListaConectados.user[j].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
 					}else
 					{
 						sprintf(respuesta_para_cliente,"7/%s se ha desconectado/",username);
+						write(ListaConectados.user[j].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
+						sprintf(respuesta_para_cliente,"13/");
+						write(ListaConectados.user[j].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
 					}
-					write(ListaConectados.user[j].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
-					OnlineUsers(&ListaConectados, conectados,username);
-					sprintf(respuesta_para_cliente,"5/%s" ,conectados);
-					write(ListaConectados.user[j].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
 				}
 				pthread_mutex_unlock(&mutex);
 			}
@@ -525,7 +587,7 @@ int main(int argc, char *argv[])
 	// Inicializaciones
 	// Abrimos el socket
 	if ((sock_listen = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-		printf("Error creando socket");
+		printf("Error creando socket\n");
 
 	printf("Intentando bind\n");
 	// Hacemos el bind
@@ -538,7 +600,7 @@ int main(int argc, char *argv[])
 	// establecemos el puerto de escucha
 	serv_adr.sin_port = htons(puerto);
 	if (bind(sock_listen, (struct sockaddr*)&serv_adr, sizeof(serv_adr)) < 0)
-		printf("Error al bind");
+		printf("Error al bind\n");
 
 	if (listen(sock_listen, 3) < 0)
 		printf("Error en el Listen\n");

@@ -145,17 +145,25 @@ public class MessageParser : MonoBehaviour
                         mainMenu.invitationResponse.text = message;
                         mainMenu.invitationResponseObj.SetActive(true);
                     }
+                    else if (message == "Waiting for response")
+                    {
+                        mainMenu.invitationResponse.text = message;
+                        mainMenu.invitationResponseObj.SetActive(true);
+                    }
                     break;
                 case 9://Invitation Notification
-                    string[] userWhoSentInvite = message.Split('/');
-
+        
                     mainMenu.UserThatSentInvite = message;
                     mainMenu.UserHasInvitedYouLbl.text ="New Invite from "+ message;
                     mainMenu.InvitationBox.SetActive(true);
                     break;
+                case 10://response to my response to an invitation
+                    Debug.Log("Llego"+message);
+                    break;
                 case 11:
                     if (message == "Invitation Accepted")
                     {
+                        mainMenu.SendMatchID(pieces[2]);
                         mainMenu.invitationResponse.text = "Invitation Accepted";
                         mainMenu.invitationResponseObj.SetActive(true);
                     }
@@ -169,6 +177,12 @@ public class MessageParser : MonoBehaviour
                         mainMenu.invitationResponse.text = "Invitation Error";
                         mainMenu.invitationResponseObj.SetActive(true);
                     }
+                    break;
+                case 12:
+                    Debug.Log(message);
+                    break;
+                case 13:
+                    mainMenu.GetConnectedUsers();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("Unknown value");
@@ -238,5 +252,6 @@ public class MessageParser : MonoBehaviour
         serverConnection.DisconnectFromServer();
         Debug.Log("Conexion cerrada");
         
-    }
+    } 
+   
 }

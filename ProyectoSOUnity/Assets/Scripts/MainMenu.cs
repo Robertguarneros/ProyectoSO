@@ -130,7 +130,14 @@ namespace MainMenuUI
         public void DeclineInvite()//metodo para declinar una invitacion
         {
             //enviamos al servidor el mensaje de que se declino la partida
-            string mensaje = "10/Decline/"+UserThatSentInvite;
+            string mensaje = "10/Decline/" + UserThatSentInvite;
+            Debug.Log(mensaje);
+            serverConnection.SendMessage(mensaje);
+            Debug.Log("Enviado");
+        }
+        public void SendMatchID(string matchID)
+        {
+            string mensaje = "12/" + matchID;
             Debug.Log(mensaje);
             serverConnection.SendMessage(mensaje);
             Debug.Log("Enviado");
