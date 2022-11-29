@@ -13,7 +13,7 @@
 #include <my_global.h>
 #include <unistd.h>
 
-int puerto=50000;//puertos para shiva 50000-50003
+int puerto=50002;//puertos para shiva 50000-50003
 
 //Estructura para acceso excluyente cuando se comparte una estructura compartida
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -523,9 +523,20 @@ void* ServeClient(void* socket)
 		{
 			currentmatchID=atoi(peticion);
 			sprintf(respuesta_para_cliente,"12/Obtained MatchID");
+			int positionForMessage = UsernamePosition(&ListaConectados,currentOponent);//obtengo el socket del oponente
+			write(ListaConectados.user[positionForMessage].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));//envio mensaje al oponente
+		}else if(codigo == 14)
+		{
+			sprintf(respuesta_para_cliente,"14/Cargando Escena");
+		}else if(codigo == 15)
+		{
+			sprintf(respuesta_para_cliente,"16/%s: %s",username,peticion);
+			write(sock_conn, respuesta_para_cliente, strlen(respuesta_para_cliente));//me la mando a mi mismo
+			int positionForMessage = UsernamePosition(&ListaConectados,currentOponent);//obtengo el socket del oponente
+			write(ListaConectados.user[positionForMessage].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));//envio mensaje al oponente
 		}
 
-		if ((codigo != 0)||(codigo == 0))
+		if (((codigo != 0) && (codigo != 15)&&(codigo !=10))||(codigo == 0))
 		{
 			write(sock_conn, respuesta_para_cliente, strlen(respuesta_para_cliente));// Enviamos la respuesta
 			if(codigo == 2)//enviamos notifiacion de usuario conectado/desconectado

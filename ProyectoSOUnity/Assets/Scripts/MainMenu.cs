@@ -149,5 +149,12 @@ namespace MainMenuUI
             serverConnection.SendMessage(mensaje);
             Debug.Log("Cerrando Sesion");
         }
+        public void SoloPlay()
+        {
+            string mensaje = "14/";
+            Debug.Log(mensaje);
+            serverConnection.SendMessage(mensaje);
+            Debug.Log("Enviado");
+        }
     }
 }

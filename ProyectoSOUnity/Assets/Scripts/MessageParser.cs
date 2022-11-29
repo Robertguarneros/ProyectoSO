@@ -11,6 +11,8 @@ using Unity.VisualScripting;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using UnityEngine.Events;
+using Level_1UI;
 
 
 public class MessageParser : MonoBehaviour
@@ -22,20 +24,22 @@ public class MessageParser : MonoBehaviour
 
     void Awake()
     {
+        
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
-    //Start is called before the first frame update
-    //It gets all the unity objects needed on this script, makes the infoLog invisible
-    //Get an instance of the server connection
+
+    //start is called before the first frame update
+    //it gets all the unity objects needed on this script, makes the infolog invisible
+    //get an instance of the server connection
     //set the button events
-    //Executes the function to connect to the server for the first time
+    //executes the function to connect to the server for the first time
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         Debug.Log("Loading Message_Parser");
 
         GameObject mainMenuWindow = GameObject.Find("MainMenu");//Obtenemos la informacion de la ventana del menu principal antes de inicar sesion
         mainMenu = mainMenuWindow.GetComponent<MainMenu>();
-        
+
         ConnectToServer();
     }
     async private void ListenForServer()
@@ -166,6 +170,8 @@ public class MessageParser : MonoBehaviour
                         mainMenu.SendMatchID(pieces[2]);
                         mainMenu.invitationResponse.text = "Invitation Accepted";
                         mainMenu.invitationResponseObj.SetActive(true);
+                        run = false;
+                        SceneManager.LoadScene("Level_1", LoadSceneMode.Single);
                     }
                     else if (message == "Invitation Rejected")
                     {
@@ -179,10 +185,23 @@ public class MessageParser : MonoBehaviour
                     }
                     break;
                 case 12:
-                    Debug.Log(message);
+                    Debug.Log("MatchID"+message);
+                    run = false;//esto para el message parser al recibir el match id
+                    SceneManager.LoadScene("Level_1", LoadSceneMode.Single);
                     break;
                 case 13:
                     mainMenu.GetConnectedUsers();
+                    break;
+                case 14:
+                    run = false;
+                    SceneManager.LoadScene("Level_1",LoadSceneMode.Single);
+                    Debug.Log(message);
+                    break;
+                case 15:
+                    Debug.Log(message);
+                    break;
+                case 16:
+                    Debug.Log(message);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("Unknown value");
@@ -251,7 +270,13 @@ public class MessageParser : MonoBehaviour
         Debug.Log("Cerrando conexion");
         serverConnection.DisconnectFromServer();
         Debug.Log("Conexion cerrada");
-        
-    } 
-   
+    }
+    public void OnDisable()
+    {
+       SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+    void OnDestroy()
+    {
+        Debug.Log("Destroyed...");
+    }
 }

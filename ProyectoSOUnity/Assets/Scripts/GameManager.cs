@@ -1,19 +1,21 @@
+using Client;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    public Renderer fondo;
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    
+    public int PuntosTotales { get { return puntosTotales; } }
+    private int puntosTotales;
 
-    // Update is called once per frame
-    void Update()
+    public void SumarPuntos(int puntosASumar)
     {
-    fondo.material.mainTextureOffset = fondo.material.mainTextureOffset + new Vector2(0.030f,0) * Time.deltaTime;    
+        puntosTotales += puntosASumar;
+        Debug.Log(puntosTotales);
     }
+   
 }
