@@ -15,7 +15,7 @@ namespace Client
         IPEndPoint port;
         bool connected = false;
         static ServerConnection connection = null;
-        public int puerto = 50002;
+        public int puerto = 50000;
 
         //Constructor para inicializar la conexion
         private ServerConnection()
