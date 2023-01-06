@@ -120,7 +120,7 @@ public class MessageParser : MonoBehaviour
                 case 6://cerrar sesion
                     if (message == "Desconectado")
                     {
-                        mainMenu.LoginUI.SetActive(true);
+                        mainMenu.MainMenuUI.SetActive(true);
                         mainMenu.LoggedInUI.SetActive(false);
                         mainMenu.loginSuccesfulLabel.text = "Inicia sesion nuevamente";
                         mainMenu.UsernameLog.text = "";
@@ -171,7 +171,7 @@ public class MessageParser : MonoBehaviour
                         mainMenu.invitationResponse.text = "Invitation Accepted";
                         mainMenu.invitationResponseObj.SetActive(true);
                         run = false;
-                        SceneManager.LoadScene("Level_1", LoadSceneMode.Single);
+                        SceneManager.LoadScene("Level_1_Multiplayer", LoadSceneMode.Single);//regreaasr a level1
                     }
                     else if (message == "Invitation Rejected")
                     {
@@ -187,14 +187,14 @@ public class MessageParser : MonoBehaviour
                 case 12:
                     Debug.Log("MatchID"+message);
                     run = false;//esto para el message parser al recibir el match id
-                    SceneManager.LoadScene("Level_1", LoadSceneMode.Single);
+                    SceneManager.LoadScene("Level_1_Multiplayer", LoadSceneMode.Single);
                     break;
                 case 13:
                     mainMenu.GetConnectedUsers();
                     break;
                 case 14:
                     run = false;
-                    SceneManager.LoadScene("Level_1",LoadSceneMode.Single);
+                    SceneManager.LoadScene("Level_1_Solo",LoadSceneMode.Single);
                     Debug.Log(message);
                     break;
                 case 15:

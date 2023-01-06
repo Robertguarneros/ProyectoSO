@@ -7,14 +7,16 @@ public class CharacterController : MonoBehaviour
     public float velocidad;
     public float fuerzaSalto;
     private Rigidbody2D rigidBody;
-    private BoxCollider2D boxCollider;
+    private CapsuleCollider2D boxCollider;
     private bool mirandoDerecha = true;
     private Animator animator;
+
+    
     private void Start()
     {
         rigidBody = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
-        boxCollider = GetComponent<BoxCollider2D>();
+        boxCollider = GetComponent<CapsuleCollider2D>();
     }
 
     // Update is called once per frame
@@ -23,16 +25,12 @@ public class CharacterController : MonoBehaviour
         ProcesarMovimiento();
         ProcesarSalto();
     }
-    //bool EstaEnSuelo()
-  //  {
-        //Physics2D BoxCast(BoxCollider.bounds.center, new Vector2(boxCollider.bounds.size.x , boxCollider.bounds.size.y),0f,Vector2.down,0.2f,);     //caja invisible de un punto origen a un punto destino
-    //}
+   
     void ProcesarSalto()
     {
         if (Input.GetKeyDown(KeyCode.Space) )
         {
-            rigidBody.AddForce(Vector2.up * fuerzaSalto, ForceMode2D.Impulse);
-
+                rigidBody.AddForce(Vector2.up * fuerzaSalto, ForceMode2D.Impulse);
         }
     }
     void ProcesarMovimiento()
@@ -42,12 +40,12 @@ public class CharacterController : MonoBehaviour
 
         if(inputMovimiento != 0f)
         {
-            animator.SetBool("EstaCorriendo", true);
+            animator.SetBool("Running", true);
         }
         
         else
         {
-            animator.SetBool("EstaCorriendo", false);
+            animator.SetBool("Running", false);
         }
         rigidBody.velocity = new Vector2(inputMovimiento * velocidad, rigidBody.velocity.y);
 
@@ -63,7 +61,8 @@ public class CharacterController : MonoBehaviour
 
         }
             //Ejecutar codigo de volteado
-            
-            
+
     }
+    
 }
+

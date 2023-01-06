@@ -12,6 +12,9 @@ EditorBuildSettings:
     path: 
     guid: 00000000000000000000000000000000
   - enabled: 1
-    path: Assets/Scenes/Level_1.unity
+    path: Assets/Scenes/Level_1_Multiplayer.unity
     guid: 888eeac2507253d409bd6c8b868e4ec9
+  - enabled: 1
+    path: Assets/Scenes/Level_1_Solo.unity
+    guid: bbb12b247bae39d47b5575ca5385eeee
   m_configObjects: {}
