@@ -1,4 +1,5 @@
 using Client;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -26,10 +27,11 @@ public class FinalCoin : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
+            gameManager.SetSoloPlayerEndMessage();
             gameManager.SumarPuntos(valor);
             Destroy(this.gameObject); //destruye el Game Object al qué pertenece este Script, es decir , la moneda
             Time.timeScale = 0;
-            EndMessage.text = "Congratulations you reached the end of the game";
+            //EndMessage.text = "You have reached the end, Checking Scores...";
             EndMenu.SetActive(true);
             AudioManager.Instance.ReproducirSonido(sonidoMoneda);
         }

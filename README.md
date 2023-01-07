@@ -79,3 +79,7 @@ Comunicada por Roger
 Parte 1: https://www.youtube.com/watch?v=8Ri-jjEBAYE
 Parte 2: https://www.youtube.com/watch?v=e3wmT0dWOWc
 Parte 3: https://www.youtube.com/watch?v=AGO2JeE-VPA
+
+Version 6-Version Final
+Puede haber algun bug.
+Reportar cualquier bug en github. 

@@ -6336,7 +6336,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1419337058579630034, guid: 960d0b644b529d346b67ff4a36e5a39a, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1419337058579630034, guid: 960d0b644b529d346b67ff4a36e5a39a, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[2].m_Mode
@@ -8508,9 +8508,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Login correcto
-
-'
+  m_text: Login Succesful
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4b197cff2b349514296012692c44b20e, type: 2}
   m_sharedMaterial: {fileID: 6600384520348267975, guid: 4b197cff2b349514296012692c44b20e, type: 2}
@@ -9977,6 +9975,7 @@ MonoBehaviour:
   connectedImage: {fileID: 1738883091}
   errorLabel: {fileID: 329374345}
   disconnectedImage: {fileID: 119264232}
+  loginLabel: {fileID: 1184720463}
   registradoLabel: {fileID: 544837107}
   loginSuccesfulLabel: {fileID: 1184720465}
   UsernameReg: {fileID: 1410811196}
@@ -11685,7 +11684,7 @@ MonoBehaviour:
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
-          m_BoolArgument: 1
+          m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &1746228655
 MonoBehaviour:

@@ -15,6 +15,7 @@ public class Game_MessageParser : MonoBehaviour
 {
     private Level_1 level_1;
     private ServerConnection serverConnection;
+    public TextMeshProUGUI EndMessage;
 
     void Awake()
     {
@@ -101,6 +102,21 @@ public class Game_MessageParser : MonoBehaviour
                     Debug.Log("Ahora dentro del caso 16");
                     level_1.SendMessageToChat(message);
                     Debug.Log("Se acaba de llamar a la funcion SendMessageToChat");
+                    break;
+                case 18://recibimos respuseta del servidor
+                    run2 = false;
+                    if (message == "You won")
+                        EndMessage.text = message;
+                    else if (message == "You lost")
+                        EndMessage.text = message;
+                    else if (message == "It is a tie")
+                        EndMessage.text = message;
+                    else
+                        EndMessage.text = message;
+                    break;
+                case 20:
+                    if (message == "Close")
+                        run2 = false;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("Unknown value");

@@ -16,7 +16,8 @@ public class GameManager : MonoBehaviour
     private ServerConnection serverConnection;
     public int PuntosTotales { get { return puntosTotales; } }
     private int puntosTotales;
-
+    public TextMeshProUGUI EndMessage;
+    
     void Awake()
     {
         ConnectToServer();
@@ -25,6 +26,33 @@ public class GameManager : MonoBehaviour
     {
         puntosTotales += puntosASumar;
         Debug.Log(puntosTotales);
+    }
+    public void SetSoloPlayerEndMessage()
+    {
+        EndMessage.text = "Congratulations, your score is: " + puntosTotales;
+    }
+    public void SetMultiplayerEndMessage()
+    {
+        EndMessage.text = "You have reached the end, checking scores...please wait... ";
+    }
+    public void SendFinalScore() 
+    {
+        if(puntosTotales==0)
+        {
+            puntosTotales = -100;
+        }
+        string mensaje = "17/" + puntosTotales;
+        Debug.Log(mensaje);
+        serverConnection.SendMessage(mensaje);
+        Debug.Log("Enviado");
+    }
+    public void SendFinalScoreAbandono()
+    {
+        puntosTotales = -100;
+        string mensaje = "19/" + puntosTotales;
+        Debug.Log(mensaje);
+        serverConnection.SendMessage(mensaje);
+        Debug.Log("Enviado");
     }
     async private void ConnectToServer()
     {

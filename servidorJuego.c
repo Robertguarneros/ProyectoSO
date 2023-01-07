@@ -13,7 +13,7 @@
 #include <my_global.h>
 #include <unistd.h>
 
-int puerto=50002;//puertos para shiva 50000-50003
+int puerto=50001;//puertos para shiva 50000-50003
 
 //Estructura para acceso excluyente cuando se comparte una estructura compartida
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -321,6 +321,67 @@ int AddMatch(MYSQL *conn,char username1[100],char username2[100])
 	//regresamos el resultado
 	return respuesta_funcion;
 }
+int AddUserScore(MYSQL *conn,char player[100],int puntos,int GameID)
+{
+	char consulta [512];//string para enviar la consulta a BBDD
+	MYSQL_ROW row;
+	int respuesta_funcion;
+
+	//Se construye la consulta sql
+	sprintf(consulta,"UPDATE Games SET %s=%d WHERE Game_ID=%d;",player,puntos,GameID);
+	// hacemos la consulta
+	respuesta_funcion=QuerySQL(consulta,conn,&row);
+	//regresamos el resultado
+	return respuesta_funcion;
+}
+int GetUserScore(MYSQL *conn,char player[100],int GameID)
+{
+	char consulta [512];//string para enviar la consulta a BBDD
+	MYSQL_ROW row;
+	int respuesta_funcion;
+
+	//Se construye la consulta sql
+	sprintf(consulta,"SELECT %s from Games WHERE Game_ID=%d;",player,GameID);
+	// hacemos la consulta
+	respuesta_funcion=QuerySQL(consulta,conn,&row);
+	//regresamos el resultado
+	if(respuesta_funcion==0)
+	{
+		if (row == NULL)
+		{
+			respuesta_funcion=-1;
+		}
+		else
+		{
+			respuesta_funcion=atoi(row[0]);//regresamos el valor de la cuenta
+		}
+	}
+	return respuesta_funcion;
+}
+int CheckPlayerNumber(MYSQL *conn,char username1[100],int GameID)
+{
+	char consulta [512];//string para enviar la consulta a BBDD
+	MYSQL_ROW row;
+	int respuesta_funcion;
+
+	//Se construye la consulta sql
+	sprintf(consulta,"SELECT IF(STRCMP(Username_Player1,'%s')=0,1,0) FROM Games WHERE Game_ID=%d;",username1,GameID);
+	// hacemos la consulta
+	respuesta_funcion=QuerySQL(consulta,conn,&row);
+	if(respuesta_funcion==0)
+	{
+		if (row == NULL)
+		{
+			respuesta_funcion=-1;
+		}
+		else
+		{
+			respuesta_funcion=atoi(row[0]);//regresamos el valor de la cuenta
+		}
+	}
+	//regresamos el resultado
+	return respuesta_funcion;
+}
 int GetLastMatchCreatedID(MYSQL *conn)
 {
 	char consulta [512];//string para enviar la consulta a BBDD
@@ -361,7 +422,9 @@ void* ServeClient(void* socket)
 	int currentlyinMatch=0;
 	char currentOponent[100];
 	int currentmatchID;
-
+	int myscore=0;
+	int opponentscore=0;
+	char scorePlayer[100];
 	int terminar = 0;
 	while (terminar == 0)
 	{
@@ -472,25 +535,28 @@ void* ServeClient(void* socket)
 			}
 		}else if (codigo == 8)//Mandar Invitacion a un usario
 		{
-
-			printf("%d\n",currentlyinMatch);//0 libre, 1 ocupado
 			strcpy(currentOponent,peticion);
-			int positionForInvite = UsernamePosition(&ListaConectados,currentOponent);
-			if(currentlyinMatch==1)
+			if(strcmp(username,currentOponent)!=0)
 			{
-				sprintf(respuesta_para_cliente,"8/Wating for response");
-			}
-			else{
-
-				if(positionForInvite==-1)
+				int positionForInvite = UsernamePosition(&ListaConectados,currentOponent);
+				if(currentlyinMatch==1)
 				{
-					sprintf(respuesta_para_cliente,"8/Username does not exist or is not connected");
-				}else{
-					currentlyinMatch=0;
-					sprintf(respuesta_para_cliente,"9/%s",username);
-					write(ListaConectados.user[positionForInvite].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
-					sprintf(respuesta_para_cliente,"8/Invite Sent");
+					sprintf(respuesta_para_cliente,"8/Wating for response");
 				}
+				else{
+
+					if(positionForInvite==-1)
+					{
+						sprintf(respuesta_para_cliente,"8/Username does not exist or is not connected");
+					}else{
+						currentlyinMatch=0;
+						sprintf(respuesta_para_cliente,"9/%s",username);
+						write(ListaConectados.user[positionForInvite].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));
+						sprintf(respuesta_para_cliente,"8/Invite Sent");
+					}
+				}
+			}else if(strcmp(username,currentOponent)==0){
+				sprintf(respuesta_para_cliente,"8/Cant invite yourself");
 			}
 			printf("se ha enviado invitacion\n");
 		}else if (codigo == 10)
@@ -534,6 +600,63 @@ void* ServeClient(void* socket)
 			write(sock_conn, respuesta_para_cliente, strlen(respuesta_para_cliente));//me la mando a mi mismo
 			int positionForMessage = UsernamePosition(&ListaConectados,currentOponent);//obtengo el socket del oponente
 			write(ListaConectados.user[positionForMessage].socket,respuesta_para_cliente,strlen(respuesta_para_cliente));//envio mensaje al oponente
+		}else if(codigo == 17)//subimos nuestra puntuacion a base de datos y checamos quien gana
+		{
+			myscore = atoi(peticion);
+			int Player1bool = CheckPlayerNumber(conn,username,currentmatchID);//primero checamos si el usuario es el Player1 o 2
+			printf("Player1bool=%d\n",Player1bool);
+			if(Player1bool==1)//quiere decir que mi usuario es el player 1 en la base de datos
+			{
+				strcpy(scorePlayer,"Score_Player1");
+				printf("Yo soy el player1, %s\n",username);
+			}else{
+				strcpy(scorePlayer,"Score_Player2");
+				printf("Yo soy el player2, %s\n",username);
+			}
+			int addtoscore = AddUserScore(conn,scorePlayer, myscore,currentmatchID);
+			while(opponentscore==0)
+			{
+				if(Player1bool == 1)
+				{
+					opponentscore = GetUserScore(conn,"Score_Player2",currentmatchID);//checar el score del oponente jugador 2
+				}else{
+					opponentscore = GetUserScore(conn,"Score_Player1",currentmatchID);//checar el score del oponente jugador 1
+				}
+				printf("Score del oponente es:%d\n",opponentscore);
+				printf("My score es: %d\n",myscore);
+				if(opponentscore!=0)
+				{
+					if(opponentscore>myscore)
+					{
+						sprintf(respuesta_para_cliente,"18/You lost");
+					}else if(opponentscore<myscore){
+						sprintf(respuesta_para_cliente,"18/You won");
+					}else if(opponentscore==myscore){
+						sprintf(respuesta_para_cliente,"18/It is a tie");
+					}else{
+						sprintf(respuesta_para_cliente,"18/Error when viewing who won");
+					}
+				}
+				sleep(5);
+			}
+
+			currentlyinMatch=0;//avisamos que ya termino la partida y podemos jugar
+		}else if(codigo == 19)//subimos nuestra puntuacion a base de datos despues de que alguien abandono la partida
+		{
+			myscore = atoi(peticion);
+			int Player1bool = CheckPlayerNumber(conn,username,currentmatchID);//primero checamos si el usuario es el Player1 o 2
+			printf("Player1bool=%d\n",Player1bool);
+			if(Player1bool==1)//quiere decir que mi usuario es el player 1 en la base de datos
+			{
+				strcpy(scorePlayer,"Score_Player1");
+				printf("Yo soy el player1, %s\n",username);
+			}else{
+				strcpy(scorePlayer,"Score_Player2");
+				printf("Yo soy el player2, %s\n",username);
+			}
+			int addtoscore = AddUserScore(conn,scorePlayer, myscore,currentmatchID);
+			sprintf(respuesta_para_cliente,"20/Close");//mensaje para cerras game message parser
+			currentlyinMatch=0;//avisamos que ya termino la partida y podemos jugar
 		}
 
 		if (((codigo != 0) && (codigo != 15)&&(codigo !=10))||(codigo == 0))

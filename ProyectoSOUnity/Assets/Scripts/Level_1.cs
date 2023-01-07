@@ -15,12 +15,17 @@ namespace Level_1UI
         public List<Message> messageList = new List<Message>();
         public GameObject chatPanel, textObject;
         public TMP_InputField chatBox;
+        
+        public GameObject chatpanel;
+        public bool chaton;
+
         public void Start()
         {
             serverConnection = ServerConnection.GetInstance();
         }
         public void Update()
         {
+            
             if (chatBox.text != "")
             {
                 if (Input.GetKeyDown(KeyCode.Return))
@@ -65,6 +70,18 @@ namespace Level_1UI
 
             messageList.Add(newMessage);
         }
+        public void ToggleChatOn()
+        {
+
+            Time.timeScale = 0;
+
+        }
+        public void ToggleChatOff()
+        {
+
+            Time.timeScale = 1;
+
+        }
 
     }
     [System.Serializable]
@@ -73,4 +90,5 @@ namespace Level_1UI
         public string text;
         public TextMeshProUGUI textObject;
     }
+
 }

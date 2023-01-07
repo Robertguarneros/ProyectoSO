@@ -28,6 +28,7 @@ namespace MainMenuUI
         public GameObject connectedImage;
         public GameObject errorLabel;
         public GameObject disconnectedImage;
+        public GameObject loginLabel;
 
         public TextMeshProUGUI registradoLabel;
         public TextMeshProUGUI loginSuccesfulLabel;

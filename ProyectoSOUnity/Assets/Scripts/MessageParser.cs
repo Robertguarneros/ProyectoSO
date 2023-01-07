@@ -47,7 +47,6 @@ public class MessageParser : MonoBehaviour
         bool run = true;
         while (run)
         {
-            Debug.Log("Esperando Respuesta del Servidor");
             string serverResponse = await Task.Run(() => serverConnection.ListenForMessage());
 
             Debug.Log(serverResponse);
@@ -62,14 +61,13 @@ public class MessageParser : MonoBehaviour
                 case 0:
                     if (message == "Cerrando Sesion")
                     {
-                        Debug.Log("Cerrando Sesion");
                         run = false;
                     }
                         break;
                 case 1://registro de usuarios
                     if (message == "Registrado Correctamente")
-                        mainMenu.registradoLabel.text = "Registrado Correctamente\nVuelve atras para iniciar sesion";
-                    else if (message == "Username ya existe, escoge otro Username")
+                        mainMenu.registradoLabel.text = "Registration Successful\nGo back to login";
+                    else if (message == "Username is taken, pick another Username")
                         mainMenu.registradoLabel.text = message;
                     else
                         mainMenu.registradoLabel.text = message;
@@ -79,30 +77,32 @@ public class MessageParser : MonoBehaviour
                     {
                         mainMenu.LoginUI.SetActive(false);
                         mainMenu.LoggedInUI.SetActive(true);
+                        mainMenu.loginSuccesfulLabel.text = "Login Successful";
+                        mainMenu.loginLabel.SetActive(true);
                     }
                     else if (message == "Password Incorrecto")
-                        mainMenu.loginSuccesfulLabel.text = message;
+                        mainMenu.loginSuccesfulLabel.text = "Wrong Password";
                     else if (message == "Username Incorrecto o No Registrado")
-                        mainMenu.loginSuccesfulLabel.text = message;
+                        mainMenu.loginSuccesfulLabel.text = "Username incorrect or not registered";
                     else if (message == "Servidor lleno, intenta mas tarde")
-                        mainMenu.loginSuccesfulLabel.text = message;
+                        mainMenu.loginSuccesfulLabel.text = "Server full please try later";
                     else if (message == "Usuario ya conectado, intenta con otro usuario")
-                        mainMenu.loginSuccesfulLabel.text = message;
+                        mainMenu.loginSuccesfulLabel.text = "User is already connected, try with another user";
                     else
-                        mainMenu.loginSuccesfulLabel.text = "Error al iniciar sesion, intenta nuevamente";
+                        mainMenu.loginSuccesfulLabel.text = "Error when logging in please try again";
                     break;
                 case 3://Contar el numero de partidas jugadas
                     if (message == "Username Incorrecto o No Registrado")
-                        mainMenu.resultCountGames.text = message;
+                        mainMenu.resultCountGames.text = "Username incorrect or not registered";
                     else if (message == "No se encontraron partidas")
-                        mainMenu.resultCountGames.text = message;
+                        mainMenu.resultCountGames.text = "No matches were found";
                     else
-                        mainMenu.resultCountGames.text = "Se han encontrado " + message + " partidas";
+                        mainMenu.resultCountGames.text = "Found " + message + " matches";
                     break;
                 case 4://Buscar una partida
                     if (message == "No se encontraron partidas")
                     {
-                        mainMenu.resultViewScore.text = message;
+                        mainMenu.resultViewScore.text = "No matches found";
                         mainMenu.resultsViewScoreLabel.SetActive(true);
                     }
                     else
@@ -113,7 +113,7 @@ public class MessageParser : MonoBehaviour
                     break;
                 case 5://Ver lista de conectados
                     if (message == "No hay otros usuarios")
-                        mainMenu.ConnectedUserListLbl.text = "No hay usuarios, solo tu estas en linea";
+                        mainMenu.ConnectedUserListLbl.text = "No users online, only you";
                     else
                         mainMenu.ConnectedUserListLbl.text = message;
                     break;
@@ -122,21 +122,18 @@ public class MessageParser : MonoBehaviour
                     {
                         mainMenu.MainMenuUI.SetActive(true);
                         mainMenu.LoggedInUI.SetActive(false);
-                        mainMenu.loginSuccesfulLabel.text = "Inicia sesion nuevamente";
+                        mainMenu.loginSuccesfulLabel.text = "Login Again";
                         mainMenu.UsernameLog.text = "";
                         mainMenu.PasswordLog.text = "";
                     }
                     else if (message == "Error al desconectar")
                     {
-                        mainMenu.logoutLbl.text = message;
+                        mainMenu.logoutLbl.text = "Error when logging out";
                         mainMenu.logoutLblObj.SetActive(true);
                     }
                     break;
                 case 7://Notificacion nuevo usuario conectado
-                    Debug.Log("Intentando mostrar notificacion");
-
                     StartCoroutine(ShowUserJoinedNotification(message,5));
-                    Debug.Log("Notificacion mostrada");
                     break;
                 case 8://Invitation Sent
                     if (message == "Invite Sent")
@@ -152,6 +149,11 @@ public class MessageParser : MonoBehaviour
                     else if (message == "Waiting for response")
                     {
                         mainMenu.invitationResponse.text = message;
+                        mainMenu.invitationResponseObj.SetActive(true);
+                    }
+                    else if (message == "Cant invite yourself")
+                    {
+                        mainMenu.invitationResponse.text = "You cannot invite yourself";
                         mainMenu.invitationResponseObj.SetActive(true);
                     }
                     break;
@@ -171,7 +173,7 @@ public class MessageParser : MonoBehaviour
                         mainMenu.invitationResponse.text = "Invitation Accepted";
                         mainMenu.invitationResponseObj.SetActive(true);
                         run = false;
-                        SceneManager.LoadScene("Level_1_Multiplayer", LoadSceneMode.Single);//regreaasr a level1
+                        SceneManager.LoadScene("Level_1_Multiplayer", LoadSceneMode.Single);//regreasar a level1
                     }
                     else if (message == "Invitation Rejected")
                     {
@@ -204,6 +206,9 @@ public class MessageParser : MonoBehaviour
                     Debug.Log(message);
                     break;
                 default:
+                case 18:
+                    Debug.Log(message);
+                    break;
                     throw new ArgumentOutOfRangeException("Unknown value");
             }
         }

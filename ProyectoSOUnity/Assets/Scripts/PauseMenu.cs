@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Client;
+using TMPro;
 
 public class PauseMenu : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class PauseMenu : MonoBehaviour
     
     public GameObject pauseMenu;
     public bool isPaused;
+    public GameManager gameManager;
     
     // Start is called before the first frame update
     void Start()
@@ -23,6 +25,7 @@ public class PauseMenu : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (isPaused)
@@ -49,6 +52,7 @@ public class PauseMenu : MonoBehaviour
     }
     public void GoToMainMenu()
     {
+        gameManager.SendFinalScoreAbandono();
         Time.timeScale = 1;
         string mensaje = "6/";
         Debug.Log(mensaje);
@@ -57,6 +61,21 @@ public class PauseMenu : MonoBehaviour
         SceneManager.LoadScene("MainMenu");
     }
     public void QuitGame()
+    {
+        gameManager.SendFinalScoreAbandono();
+        serverConnection.DisconnectFromServer();
+        Application.Quit();
+    }
+    public void GoToMainMenuEnd()
+    {
+        Time.timeScale = 1;
+        string mensaje = "6/";
+        Debug.Log(mensaje);
+        serverConnection.SendMessage(mensaje);
+        Debug.Log("Cerrando Sesion");
+        SceneManager.LoadScene("MainMenu");
+    }
+    public void QuitGameEnd()
     {
         serverConnection.DisconnectFromServer();
         Application.Quit();
