@@ -38,8 +38,15 @@ namespace MainMenuUI
         public TMP_InputField NameReg;
         public TMP_InputField UsernameLog;
         public TMP_InputField PasswordLog;
-        
-        
+
+        //variables de ventana eliminar usuario
+        public GameObject DeleteUserUI;
+        public GameObject UserSuccesfulDel;
+        public TMP_InputField UsernameDel;
+        public TMP_InputField PasswordDel;
+        public TextMeshProUGUI UserDelSuccesful;
+
+
 
         //variables del menu despues de iniciar sesion
         public GameObject LoggedInUI;
@@ -86,6 +93,14 @@ namespace MainMenuUI
         {
             //enviamos al servidor el usuario y contrasena
             string mensaje = "2/" + UsernameLog.text + "/" + PasswordLog.text;
+            Debug.Log(mensaje);
+            serverConnection.SendMessage(mensaje);
+            Debug.Log("Enviado");
+        }
+        public void DeleteUser()//metodo para eliminar usuario
+        {
+            //enviamos al servidor el usuario y contrasena
+            string mensaje = "21/" + UsernameDel.text + "/" + PasswordDel.text + "/";
             Debug.Log(mensaje);
             serverConnection.SendMessage(mensaje);
             Debug.Log("Enviado");

@@ -90,6 +90,7 @@ public class MessageParser : MonoBehaviour
                         mainMenu.loginSuccesfulLabel.text = "User is already connected, try with another user";
                     else
                         mainMenu.loginSuccesfulLabel.text = "Error when logging in please try again";
+                    mainMenu.loginLabel.SetActive(true);
                     break;
                 case 3://Contar el numero de partidas jugadas
                     if (message == "Username Incorrecto o No Registrado")
@@ -205,10 +206,22 @@ public class MessageParser : MonoBehaviour
                 case 16:
                     Debug.Log(message);
                     break;
-                default:
                 case 18:
                     Debug.Log(message);
                     break;
+                case 21: //user deleted
+                    if (message == "User deleted")
+                    {
+                        mainMenu.UserDelSuccesful.text = "User has been deleted";
+                        mainMenu.UserSuccesfulDel.SetActive(true);
+                    }
+                    else if (message == "Error, try again")
+                    {
+                        mainMenu.UserDelSuccesful.text = "Error when deleting user, try again";
+                        mainMenu.UserSuccesfulDel.SetActive(true);
+                    }
+                    break;
+                default:
                     throw new ArgumentOutOfRangeException("Unknown value");
             }
         }

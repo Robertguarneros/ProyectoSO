@@ -307,6 +307,48 @@ int Login(char peticion[512],MYSQL *conn, int socket,char username[100])
 	//regresamos el resultado
 	return respuesta_funcion;
 }
+//Funcion para eliminar usuario
+int DeleteUser(MYSQL *conn,char peticion[512])
+{
+	char usernameDel[100];
+	char passwordDel[100];
+	char consulta [512];//string para enviar la consulta a BBDD
+	MYSQL_ROW row;
+	int respuesta_funcion;
+
+	strcpy(usernameDel,strtok(peticion, "/"));
+	strcpy(passwordDel,strtok(NULL, "/"));
+
+	int passwdCorrect;
+
+	printf("Username:%s\n",usernameDel);
+	printf("Password:%s\n",passwordDel);
+
+	//Se construye la consulta sql para verificar contraseña
+	sprintf(consulta,"SELECT IF(STRCMP(Passwd,%s)=0,1,0) from Jugador WHERE Username='%s';",passwordDel,usernameDel);//1 true, 0 false
+	// hacemos la consulta
+	passwdCorrect=QuerySQL(consulta,conn,&row);
+	if(passwdCorrect==0)
+	{
+		passwdCorrect=atoi(row[0]);
+	}
+	printf("Password Correcto:%d",passwdCorrect);
+	if(passwdCorrect==1)
+	{
+		//Se construye la consulta sql para eliminar de tabla de partidas
+		sprintf(consulta,"DELETE FROM Games WHERE Username_Player1='%s' or Username_Player2='%s';",usernameDel,usernameDel);
+		// hacemos la consulta
+		respuesta_funcion=QuerySQL(consulta,conn,&row);
+		//Se construye la consulta sql para eliminar de tabla de partidas
+		sprintf(consulta,"DELETE FROM Jugador WHERE Username='%s';",usernameDel);
+		// hacemos la consulta
+		respuesta_funcion=QuerySQL(consulta,conn,&row);
+	}else{
+		respuesta_funcion=-1;
+	}
+	//regresamos el resultado
+	return respuesta_funcion;
+}
 //Funcion para agregar una partida
 int AddMatch(MYSQL *conn,char username1[100],char username2[100])
 {
@@ -426,6 +468,7 @@ void* ServeClient(void* socket)
 	int opponentscore=0;
 	char scorePlayer[100];
 	int terminar = 0;
+	char password[100];
 	while (terminar == 0)
 	{
 		ret = read(sock_conn, peticion, sizeof(peticion));
@@ -474,18 +517,20 @@ void* ServeClient(void* socket)
 		}else if (codigo == 2)//login
 		{
 			respuesta_servidor_sql = Login(peticion,conn,sock_conn,username);
+			printf("RespuestaLogin:%d\n",respuesta_servidor_sql);
 			if (respuesta_servidor_sql==-1)
+			{
 				strcpy(respuesta_para_cliente, "2/Username Incorrecto o No Registrado");
-			else if (respuesta_servidor_sql==-2)
+			}else if (respuesta_servidor_sql==-2){
 				strcpy(respuesta_para_cliente, "2/Password Incorrecto");
-			else if (respuesta_servidor_sql == -3)
+			}else if (respuesta_servidor_sql == -3){
 				sprintf(respuesta_para_cliente, "2/Servidor lleno, intenta mas tarde");
-			else if(respuesta_servidor_sql==0)
+			}else if(respuesta_servidor_sql==0)
 			{
 				loggedIn=true;
 				sprintf(respuesta_para_cliente, "2/Login Correcto");
 			}else if(respuesta_servidor_sql==-4){
-			sprintf(respuesta_para_cliente, "2/Usuario ya conectado, intenta con otro usuario");
+				sprintf(respuesta_para_cliente, "2/Usuario ya conectado, intenta con otro usuario");
 			}
 		}else if (codigo == 3)//contar partidas jugadas
 		{
@@ -657,6 +702,15 @@ void* ServeClient(void* socket)
 			int addtoscore = AddUserScore(conn,scorePlayer, myscore,currentmatchID);
 			sprintf(respuesta_para_cliente,"20/Close");//mensaje para cerras game message parser
 			currentlyinMatch=0;//avisamos que ya termino la partida y podemos jugar
+		}else if(codigo == 21)//eliminar usuario
+		{
+			int deleteSuccesful = DeleteUser(conn, peticion);
+			if(deleteSuccesful == 0)
+			{
+				sprintf(respuesta_para_cliente,"21/User deleted");
+			}else{
+				sprintf(respuesta_para_cliente,"21/Error, try again");
+			}
 		}
 
 		if (((codigo != 0) && (codigo != 15)&&(codigo !=10))||(codigo == 0))
