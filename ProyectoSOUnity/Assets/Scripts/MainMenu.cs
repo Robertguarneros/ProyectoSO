@@ -93,6 +93,8 @@ namespace MainMenuUI
         {
             //enviamos al servidor el usuario y contrasena
             string mensaje = "2/" + UsernameLog.text + "/" + PasswordLog.text;
+            serverConnection.SetUser(UsernameLog.text);
+            serverConnection.SetPasswd(PasswordLog.text);
             Debug.Log(mensaje);
             serverConnection.SendMessage(mensaje);
             Debug.Log("Enviado");
@@ -163,6 +165,10 @@ namespace MainMenuUI
             string mensaje = "6/";
             Debug.Log(mensaje);
             serverConnection.SendMessage(mensaje);
+            if (serverConnection.IsLoggedIn() == true)
+            {
+                serverConnection.SetLoggedIn(false);
+            }
             Debug.Log("Cerrando Sesion");
         }
         public void SoloPlay()

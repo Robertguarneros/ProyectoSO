@@ -14,8 +14,11 @@ namespace Client
         IPAddress ip;
         IPEndPoint port;
         bool connected = false;
+        bool loggedin=false;
         static ServerConnection connection = null;
         public int puerto = 50001;
+        string user;
+        string passwd;
 
         //Constructor para inicializar la conexion
         private ServerConnection()
@@ -88,10 +91,36 @@ namespace Client
         {
             return connected;
         }
+        public bool IsLoggedIn()
+        {
+            return loggedin;
+        }
+        public void SetLoggedIn(bool loggedin)
+        {
+            this.loggedin = loggedin;
+        }
         //setter para bool connected
         public void SetConnected(bool connected)
         {
             this.connected = connected;
         }
+        public void SetUser(string user)
+        {
+            this.user = user;
+        }
+        public string GetUser()
+        {
+            return user;
+        }
+        public void SetPasswd(string passwd)
+        {
+            this.passwd = passwd;
+        }
+        public string GetPasswd()
+        {
+
+            return passwd;
+        }
+        
     }
 }

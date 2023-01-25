@@ -41,6 +41,13 @@ public class MessageParser : MonoBehaviour
         mainMenu = mainMenuWindow.GetComponent<MainMenu>();
 
         ConnectToServer();
+        if (serverConnection.IsLoggedIn() == true)
+        {
+            //enviamos al servidor el usuario y contrasena
+            string mensaje = "2/" + serverConnection.GetUser() + "/" + serverConnection.GetPasswd();
+            Debug.Log(mensaje);
+            serverConnection.SendMessage(mensaje);
+        }
     }
     async private void ListenForServer()
     {//formato de los mensaje codigo/mensaje
@@ -79,6 +86,14 @@ public class MessageParser : MonoBehaviour
                         mainMenu.LoggedInUI.SetActive(true);
                         mainMenu.loginSuccesfulLabel.text = "Login Successful";
                         mainMenu.loginLabel.SetActive(true);
+                        if (serverConnection.IsLoggedIn()==false)
+                        {
+                            serverConnection.SetLoggedIn(true);
+                        }
+                        else if(serverConnection.IsLoggedIn() == true)
+                        {
+                            mainMenu.MainMenuUI.SetActive(false);
+                        }
                     }
                     else if (message == "Password Incorrecto")
                         mainMenu.loginSuccesfulLabel.text = "Wrong Password";
@@ -126,6 +141,7 @@ public class MessageParser : MonoBehaviour
                         mainMenu.loginSuccesfulLabel.text = "Login Again";
                         mainMenu.UsernameLog.text = "";
                         mainMenu.PasswordLog.text = "";
+                       
                     }
                     else if (message == "Error al desconectar")
                     {
