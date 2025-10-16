@@ -5,23 +5,23 @@ entrega del proyecto de SO.
 Primero siempre asegurarse de trabajar en la version actual. Si no sabes cual
 es la version actual puedes hacer un git clone y descargarte la ultima version.
 
-Para ver el historial de versiones con los tags usa "git log"
+Para ver el historial de versiones con los tags usa `git log`
 
-Para ver los archivos que se han subido y los que no utiliza "git status"
+Para ver los archivos que se han subido y los que no utiliza `git status`
 
-Si falta algo utiliza "git add ."
+Si falta algo utiliza `git add .`
 
 Siempre asegura de que todo este en verde antes de hacer un commit.
 
-Para hacer un commit de los archivos utiliza "git commit -m "Cambios_Realizados""
+Para hacer un commit de los archivos utiliza `git commit -m "Cambios_Realizados"`
 
-Para hacer un tag utiliza "git tag -a Nombre_Tag -m "Version""
+Para hacer un tag utiliza `git tag -a "title" -m "Message"`
 
-Y para subir el commit "git push -u origin main"
+Y para subir el commit `git push -u origin main`
 
-Si el commit tiene tag entonces "git push -u origin master --tag"
+Si el commit tiene tag entonces `git push -u origin master --tag`
 
-Para volver a la version anterior usa "git stash" CUIDADO:Elimina todo lo que
+Para volver a la version anterior usa `git stash` CUIDADO:Elimina todo lo que
 has hecho.
 
 Para nombrar las versiones utilizaremos la siguiente sintaxis.
